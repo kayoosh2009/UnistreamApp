@@ -1,0 +1,179 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: #ffffff;
+  color: #333333;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden; /* Чтобы скроллилась только лента */
+}
+
+/* --- ВЕРХНЯЯ ШАПКА --- */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background-color: #160b67;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.avatar-header {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ffffff;
+  cursor: pointer;
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Расстояние между логотипом и названием */
+}
+
+.header-logo {
+  height: 32px;
+  width: auto;
+}
+
+.header-name {
+  height: 20px;
+  width: auto;
+}
+
+.header-right {
+  width: 38px; /* Чтобы отцентровать логотип относительно левой аватарки */
+}
+
+/* --- ЦЕНТРАЛЬНАЯ ЛЕНТА ПОСТОВ --- */
+.feed-container {
+  flex: 1;
+  margin-top: 60px;     /* Высота хедера */
+  margin-bottom: 60px;  /* Высота футера */
+  overflow-y: auto;     /* Скролл для постов */
+  padding: 16px;
+  background-color: #ffffff;
+}
+
+.post {
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.post-author-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.post-author-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* --- НИЖНЯЯ ПАНЕЛЬ --- */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background-color: #ffffff;
+  border-top: 1px solid #eaeaea;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 100;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.nav-btn img {
+  width: 26px;
+  height: 26px;
+  display: block;
+}
+
+/* --- ВЫПЛЫВАЮЩЕЕ МЕНЮ (BOTTOM SHEET) --- */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 150;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #ffffff;
+  border-radius: 16px 16px 0 0;
+  padding: 16px;
+  z-index: 200;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+.sheet-handle {
+  width: 40px;
+  height: 4px;
+  background: #ccc;
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+
+.sheet-content ul {
+  list-style: none;
+}
+
+.sheet-content li {
+  padding: 14px 0;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* Классы для показа меню */
+.backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.bottom-sheet.active {
+  transform: translateY(0);
+}
