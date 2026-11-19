@@ -197,18 +197,14 @@ body {
 .login-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  justify-content: center;
+  margin-bottom: 16px;
 }
 
 .login-logo {
-  height: 40px;
+  height: 56px;
+  width: auto;
 }
-
-.login-name {
-  height: 24px;
-}
-
 .login-tagline {
   font-size: 14px;
   color: #666;
