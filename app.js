@@ -1,5 +1,6 @@
-import { auth, signOut, onAuthStateChanged } from './firebase.js';
+import { auth, signOut, onAuthStateChanged, db, collection, query, orderBy, onSnapshot } from './firebase.js';
 
+const feedContainer = document.getElementById('feed');
 const btnMenu = document.getElementById('btnMenu');
 const bottomSheet = document.getElementById('bottomSheet');
 const backdrop = document.getElementById('backdrop');
@@ -7,6 +8,29 @@ const userAvatar = document.getElementById('userAvatar');
 const btnProfile = document.getElementById('btnProfile');
 const btnAddPost = document.getElementById('btnAddPost');
 const logoutBtn = document.getElementById('logoutBtn');
+
+// Real-time public feed
+const postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+onSnapshot(postsQuery, (snapshot) => {
+  feedContainer.innerHTML = '';
+  if (snapshot.empty) {
+    feedContainer.innerHTML = '<p class="empty-state">No posts yet</p>';
+    return;
+  }
+  snapshot.forEach((doc) => {
+    const post = doc.data();
+    const postElement = document.createElement('div');
+    postElement.className = 'post';
+    postElement.innerHTML = `
+      <div class="post-header">
+        <img src="${post.authorAvatar || 'icons/stock.png'}" class="post-author-avatar">
+        <span class="post-author-name">${post.authorName || 'User'}</span>
+      </div>
+      <p class="post-text">${post.text}</p>
+    `;
+    feedContainer.appendChild(postElement);
+  });
+});
 
 let currentUser = null;
 

@@ -44,7 +44,7 @@
   </main>
 
   <script type="module">
-    import { auth, onAuthStateChanged } from './firebase.js';
+    import { auth, onAuthStateChanged, db, collection, addDoc, serverTimestamp } from './firebase.js';
 
     const composerAvatar = document.getElementById('composerAvatar');
     const composerName = document.getElementById('composerName');
@@ -71,8 +71,21 @@
       const text = postInput.value.trim();
       if (!text || !currentUser) return;
 
-      console.log("Publishing:", text);
-      window.location.href = 'index.html';
+      btnPublishPost.disabled = true;
+
+      try {
+        await addDoc(collection(db, 'posts'), {
+          text: text,
+          authorId: currentUser.uid,
+          authorName: currentUser.displayName || 'User',
+          authorAvatar: currentUser.photoURL || 'icons/stock.png',
+          createdAt: serverTimestamp()
+        });
+        window.location.href = 'index.html';
+      } catch (err) {
+        console.error("Failed to publish post:", err);
+        btnPublishPost.disabled = false;
+      }
     });
   </script>
 </body>
