@@ -25,7 +25,7 @@ function requireAuth(callback) {
 
 btnProfile.addEventListener('click', () => {
   requireAuth(() => {
-    console.log("Navigating to profile...");
+    window.location.href = 'profile.html';
   });
 });
 
