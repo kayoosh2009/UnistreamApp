@@ -1,7 +1,45 @@
+import { auth, signOut, onAuthStateChanged } from './firebase.js';
+
 const btnMenu = document.getElementById('btnMenu');
 const bottomSheet = document.getElementById('bottomSheet');
 const backdrop = document.getElementById('backdrop');
 const userAvatar = document.getElementById('userAvatar');
+const btnProfile = document.getElementById('btnProfile');
+const btnAddPost = document.getElementById('btnAddPost');
+const logoutBtn = document.getElementById('logoutBtn');
+
+let currentUser = null;
+
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  updateHeaderAvatar(user);
+});
+
+function requireAuth(callback) {
+  if (!currentUser) {
+    window.location.href = 'login.html';
+    return;
+  }
+  callback();
+}
+
+btnProfile.addEventListener('click', () => {
+  requireAuth(() => {
+    console.log("Navigating to profile...");
+  });
+});
+
+btnAddPost.addEventListener('click', () => {
+  requireAuth(() => {
+    console.log("Opening post creator...");
+  });
+});
+
+logoutBtn.addEventListener('click', async () => {
+  await signOut(auth);
+  closeMenu();
+  window.location.href = 'login.html';
+});
 
 btnMenu.addEventListener('click', () => {
   bottomSheet.classList.add('active');
@@ -15,7 +53,6 @@ function closeMenu() {
   backdrop.classList.remove('active');
 }
 
-// Keep avatar updated with live profile photo ✨
 function updateHeaderAvatar(user) {
   if (user && user.photoURL) {
     userAvatar.src = user.photoURL;
