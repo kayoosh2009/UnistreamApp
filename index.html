@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Моя Соцсеть</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ВЕРХНЯЯ ЧАСТЬ (HEADER) -->
+  <header class="app-header">
+    <div class="header-left">
+      <!-- Аватарка: по умолчанию стоковое фото -->
+      <img id="userAvatar" src="icons/stock.png" alt="Аватарка" class="avatar-header">
+    </div>
+
+    <div class="header-center">
+      <img src="icons/logo.png" alt="Логотип" class="header-logo">
+      <img src="icons/name.png" alt="Название" class="header-name">
+    </div>
+
+    <!-- Пустой блок справа для баланса flexbox, чтобы центр был точно по центру -->
+    <div class="header-right"></div>
+  </header>
+
+  <!-- ЦЕНТРАЛЬНАЯ ЧАСТЬ (ЛЕНТА ПОСТОВ) -->
+  <main class="feed-container" id="feed">
+    <!-- Сюда через JS будут подгружаться посты. Добавим один тестовый: -->
+    <div class="post">
+      <div class="post-header">
+        <img src="icons/stock.png" class="post-author-avatar">
+        <span class="post-author-name">Пользователь</span>
+      </div>
+      <p class="post-text">Добро пожаловать в нашу новую соцсеть!</p>
+    </div>
+  </main>
+
+  <!-- НИЖНЯЯ ПАНЕЛЬ (BOTTOM NAV) -->
+  <nav class="bottom-nav">
+    <button class="nav-btn" id="btnProfile">
+      <img src="icons/profile.png" alt="Профиль">
+    </button>
+    
+    <button class="nav-btn btn-add" id="btnAddPost">
+      <img src="icons/add.png" alt="Добавить">
+    </button>
+    
+    <button class="nav-btn" id="btnMenu">
+      <img src="icons/menu.png" alt="Меню">
+    </button>
+  </nav>
+
+  <!-- СКРЫТОЕ МЕНЮ СНИЗУ (BOTTOM SHEET) -->
+  <div class="backdrop" id="backdrop"></div>
+  <div class="bottom-sheet" id="bottomSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-content">
+      <h3>Меню</h3>
+      <ul>
+        <li>Настройки</li>
+        <li>О приложении</li>
+        <li id="logoutBtn" style="color: red;">Выйти</li>
+      </ul>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
