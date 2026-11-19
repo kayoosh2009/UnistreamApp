@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>New Post - my unistream blog</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="create-post-body">
+
+  <header class="app-header">
+    <div class="header-left">
+      <a href="index.html" class="header-back-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </a>
+    </div>
+
+    <div class="header-center">
+      <span class="header-title">Create Post</span>
+    </div>
+
+    <div class="header-right"></div>
+  </header>
+
+  <main class="create-post-container">
+    <div class="composer-author">
+      <img id="composerAvatar" src="icons/stock.png" alt="Avatar" class="composer-avatar">
+      <div class="composer-author-details">
+        <span id="composerName" class="composer-name">User</span>
+        <span class="composer-status">Public post</span>
+      </div>
+    </div>
+
+    <textarea id="postInput" class="post-textarea" placeholder="What's on your mind?" autofocus></textarea>
+
+    <div class="composer-actions">
+      <button id="btnPublishPost" class="publish-btn" disabled>
+        <img src="icons/post.png" alt="Post" class="publish-icon">
+        <span>Post</span>
+      </button>
+    </div>
+  </main>
+
+  <script type="module">
+    import { auth, onAuthStateChanged } from './firebase.js';
+
+    const composerAvatar = document.getElementById('composerAvatar');
+    const composerName = document.getElementById('composerName');
+    const postInput = document.getElementById('postInput');
+    const btnPublishPost = document.getElementById('btnPublishPost');
+
+    let currentUser = null;
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+      currentUser = user;
+      if (user.photoURL) composerAvatar.src = user.photoURL;
+      composerName.textContent = user.displayName || 'User';
+    });
+
+    postInput.addEventListener('input', () => {
+      btnPublishPost.disabled = postInput.value.trim().length === 0;
+    });
+
+    btnPublishPost.addEventListener('click', async () => {
+      const text = postInput.value.trim();
+      if (!text || !currentUser) return;
+
+      console.log("Publishing:", text);
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

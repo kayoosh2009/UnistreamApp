@@ -31,7 +31,7 @@ btnProfile.addEventListener('click', () => {
 
 btnAddPost.addEventListener('click', () => {
   requireAuth(() => {
-    console.log("Opening post creator...");
+    window.location.href = 'add-post.html';
   });
 });
 
