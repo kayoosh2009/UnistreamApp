@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Profile - my unistream blog</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-left">
+      <a href="index.html" class="header-back-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </a>
+    </div>
+
+    <div class="header-center">
+      <span class="header-title">Profile</span>
+    </div>
+
+    <div class="header-right"></div>
+  </header>
+
+  <main class="profile-container">
+    <div class="profile-banner-wrapper">
+      <img id="profileBanner" src="icons/stock.png" alt="Banner" class="profile-banner">
+      <div class="profile-avatar-wrapper">
+        <img id="profileAvatar" src="icons/stock.png" alt="Avatar" class="profile-avatar">
+      </div>
+    </div>
+
+    <div class="profile-user-info">
+      <h2 id="profileDisplayName" class="profile-name">User Name</h2>
+      <span id="profileUsername" class="profile-username">@username</span>
+    </div>
+
+    <div class="profile-stats-card">
+      <div class="stat-item">
+        <span class="stat-number" id="statTotalViews">0</span>
+        <span class="stat-label">Total Views</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-number" id="statPostsCount">0</span>
+        <span class="stat-label">Posts</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-number" id="statViewedPosts">0</span>
+        <span class="stat-label">Viewed</span>
+      </div>
+    </div>
+
+    <div class="profile-posts-section">
+      <h3 class="section-title">Posts</h3>
+      <div id="userPostsFeed" class="user-posts-feed">
+        <p class="empty-state">No posts yet</p>
+      </div>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn" onclick="window.location.href='profile.html'">
+      <img src="icons/profile.png" alt="Profile">
+    </button>
+    <button class="nav-btn btn-add" id="btnAddPost">
+      <img src="icons/add.png" alt="Add post">
+    </button>
+    <button class="nav-btn" onclick="window.location.href='index.html'">
+      <img src="icons/logo.png" alt="Feed">
+    </button>
+  </nav>
+
+  <script type="module">
+    import { auth, onAuthStateChanged } from './firebase.js';
+
+    const profileAvatar = document.getElementById('profileAvatar');
+    const profileDisplayName = document.getElementById('profileDisplayName');
+    const profileUsername = document.getElementById('profileUsername');
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      if (user.photoURL) {
+        profileAvatar.src = user.photoURL;
+      }
+
+      profileDisplayName.textContent = user.displayName || 'Anonymous User';
+      profileUsername.textContent = '@' + (user.email ? user.email.split('@')[0] : 'user');
+    });
+  </script>
+</body>
+</html>
