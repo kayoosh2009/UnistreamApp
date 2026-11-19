@@ -75,11 +75,13 @@
   </nav>
 
   <script type="module">
-    import { auth, onAuthStateChanged } from './firebase.js';
+    import { auth, onAuthStateChanged, db, collection, query, where, orderBy, onSnapshot } from './firebase.js';
 
     const profileAvatar = document.getElementById('profileAvatar');
     const profileDisplayName = document.getElementById('profileDisplayName');
     const profileUsername = document.getElementById('profileUsername');
+    const statPostsCount = document.getElementById('statPostsCount');
+    const userPostsFeed = document.getElementById('userPostsFeed');
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -93,6 +95,37 @@
 
       profileDisplayName.textContent = user.displayName || 'Anonymous User';
       profileUsername.textContent = '@' + (user.email ? user.email.split('@')[0] : 'user');
+
+      // Load user's own posts
+      const userPostsQuery = query(
+        collection(db, 'posts'),
+        where('authorId', '==', user.uid),
+        orderBy('createdAt', 'desc')
+      );
+
+      onSnapshot(userPostsQuery, (snapshot) => {
+        userPostsFeed.innerHTML = '';
+        statPostsCount.textContent = snapshot.size;
+
+        if (snapshot.empty) {
+          userPostsFeed.innerHTML = '<p class="empty-state">No posts yet</p>';
+          return;
+        }
+
+        snapshot.forEach((doc) => {
+          const post = doc.data();
+          const postElement = document.createElement('div');
+          postElement.className = 'post';
+          postElement.innerHTML = `
+            <div class="post-header">
+              <img src="${post.authorAvatar || 'icons/stock.png'}" class="post-author-avatar">
+              <span class="post-author-name">${post.authorName || 'User'}</span>
+            </div>
+            <p class="post-text">${post.text}</p>
+          `;
+          userPostsFeed.appendChild(postElement);
+        });
+      });
     });
   </script>
 </body>
