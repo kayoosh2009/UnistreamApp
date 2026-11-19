@@ -1,16 +1,13 @@
-// Элементы UI
 const btnMenu = document.getElementById('btnMenu');
 const bottomSheet = document.getElementById('bottomSheet');
 const backdrop = document.getElementById('backdrop');
 const userAvatar = document.getElementById('userAvatar');
 
-// Открытие нижнего меню
 btnMenu.addEventListener('click', () => {
   bottomSheet.classList.add('active');
   backdrop.classList.add('active');
 });
 
-// Закрытие меню при клике на затемнение
 backdrop.addEventListener('click', closeMenu);
 
 function closeMenu() {
@@ -18,8 +15,7 @@ function closeMenu() {
   backdrop.classList.remove('active');
 }
 
-// Пример логики для аватарки:
-// Когда прикрутим Firebase, будем проверять user:
+// Keep avatar updated with live profile photo ✨
 function updateHeaderAvatar(user) {
   if (user && user.photoURL) {
     userAvatar.src = user.photoURL;
