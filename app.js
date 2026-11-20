@@ -23,8 +23,11 @@ onSnapshot(postsQuery, (snapshot) => {
     postElement.className = 'post';
     postElement.innerHTML = `
       <div class="post-header">
-        <img src="${post.authorAvatar || 'icons/stock.png'}" class="post-author-avatar">
-        <span class="post-author-name">${post.authorName || 'User'}</span>
+        <div class="post-author-box">
+          <img src="${post.authorAvatar || 'icons/stock.png'}" class="post-author-avatar">
+          <span class="post-author-name">${post.authorName || 'User'}</span>
+        </div>
+        <span class="post-id">#${post.postNumber || '1'}</span>
       </div>
       <p class="post-text">${post.text}</p>
     `;
