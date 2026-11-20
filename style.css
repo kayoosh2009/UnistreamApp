@@ -79,8 +79,14 @@ body {
 .post-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
   margin-bottom: 8px;
+}
+
+.post-author-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .post-author-avatar {
@@ -93,6 +99,22 @@ body {
 .post-author-name {
   font-weight: 600;
   font-size: 14px;
+}
+
+.post-id {
+  font-size: 12px;
+  font-weight: 700;
+  color: #777777;
+  background: #f1f2f6;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.post-text {
+  font-size: 15px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .bottom-nav {
@@ -437,10 +459,10 @@ body {
 }
 
 .composer-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding: 12px 0 20px;
-  border-top: 1px solid #f0f0f0;
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  z-index: 1000;
 }
 
 .publish-btn {
@@ -450,11 +472,12 @@ body {
   background-color: #030040;
   color: #ffffff;
   border: none;
-  border-radius: 24px;
-  padding: 10px 22px;
+  border-radius: 28px;
+  padding: 12px 24px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 4px 16px rgba(3, 0, 64, 0.35);
   transition: opacity 0.2s, transform 0.1s;
 }
 

@@ -44,7 +44,7 @@
   </main>
 
   <script type="module">
-    import { auth, onAuthStateChanged, db, collection, addDoc, serverTimestamp } from './firebase.js';
+    import { auth, onAuthStateChanged, db, doc, collection, addDoc, runTransaction, serverTimestamp } from './firebase.js';
 
     const composerAvatar = document.getElementById('composerAvatar');
     const composerName = document.getElementById('composerName');
@@ -74,13 +74,28 @@
       btnPublishPost.disabled = true;
 
       try {
+        const counterRef = doc(db, 'metadata', 'posts_counter');
+        let postNumber = 1;
+
+        await runTransaction(db, async (transaction) => {
+          const counterDoc = await transaction.get(counterRef);
+          if (counterDoc.exists()) {
+            postNumber = (counterDoc.data().count || 0) + 1;
+            transaction.update(counterRef, { count: postNumber });
+          } else {
+            transaction.set(counterRef, { count: 1 });
+          }
+        });
+
         await addDoc(collection(db, 'posts'), {
+          postNumber: postNumber,
           text: text,
           authorId: currentUser.uid,
           authorName: currentUser.displayName || 'User',
           authorAvatar: currentUser.photoURL || 'icons/stock.png',
           createdAt: serverTimestamp()
         });
+
         window.location.href = 'index.html';
       } catch (err) {
         console.error("Failed to publish post:", err);
