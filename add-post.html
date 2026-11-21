@@ -37,7 +37,21 @@
 
     <textarea id="postInput" class="post-textarea" placeholder="What's on your mind?" autofocus></textarea>
 
+    <div id="imagePreviewContainer" class="composer-preview-container hidden">
+      <img id="imagePreview" src="" alt="Preview" class="composer-preview-img">
+      <button type="button" id="btnRemoveImage" class="remove-preview-btn">&times;</button>
+    </div>
+
     <div class="composer-actions">
+      <label class="attach-photo-btn" title="Attach image">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#030040" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+        <input type="file" id="photoInput" accept="image/*" hidden>
+      </label>
+
       <button id="btnPublishPost" class="publish-btn" disabled>
         <img src="icons/post.png" alt="Post" class="publish-icon">
         <span>Post</span>
@@ -65,13 +79,68 @@
       composerName.textContent = user.displayName || 'User';
     });
 
-    postInput.addEventListener('input', () => {
-      btnPublishPost.disabled = postInput.value.trim().length === 0;
+    const photoInput = document.getElementById('photoInput');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const btnRemoveImage = document.getElementById('btnRemoveImage');
+
+    let selectedImageBase64 = null;
+
+    function checkCanPublish() {
+      const hasText = postInput.value.trim().length > 0;
+      const hasImage = Boolean(selectedImageBase64);
+      btnPublishPost.disabled = !(hasText || hasImage);
+    }
+
+    postInput.addEventListener('input', checkCanPublish);
+
+    photoInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxDim = 900;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height && width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.78);
+          imagePreview.src = selectedImageBase64;
+          imagePreviewContainer.classList.remove('hidden');
+          checkCanPublish();
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    btnRemoveImage.addEventListener('click', () => {
+      selectedImageBase64 = null;
+      photoInput.value = '';
+      imagePreview.src = '';
+      imagePreviewContainer.classList.add('hidden');
+      checkCanPublish();
     });
 
     btnPublishPost.addEventListener('click', async () => {
       const text = postInput.value.trim();
-      if (!text || !currentUser) return;
+      if ((!text && !selectedImageBase64) || !currentUser) return;
 
       btnPublishPost.disabled = true;
 
@@ -92,6 +161,7 @@
         await addDoc(collection(db, 'posts'), {
           postNumber: postNumber,
           text: text,
+          imageUrl: selectedImageBase64 || null,
           authorId: currentUser.uid,
           authorName: currentUser.displayName || 'User',
           authorAvatar: currentUser.photoURL || 'icons/stock.png',

@@ -34,6 +34,29 @@ if (authDialogCancel) {
 const viewedSessionKey = 'viewed_post_ids';
 const viewedPosts = new Set(JSON.parse(sessionStorage.getItem(viewedSessionKey) || '[]'));
 
+function formatTimeAgo(timestamp) {
+  if (!timestamp) return 'just now';
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  const diffSec = Math.floor((new Date() - date) / 1000);
+
+  if (diffSec < 60) {
+    return diffSec <= 1 ? '1 second ago' : `${diffSec} seconds ago`;
+  }
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) {
+    return diffMin === 1 ? '1 minute ago' : `${diffMin} minutes ago`;
+  }
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) {
+    return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+  }
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) {
+    return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+  }
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 function markPostViewed(postId) {
   if (!viewedPosts.has(postId)) {
     viewedPosts.add(postId);
@@ -70,11 +93,15 @@ onSnapshot(postsQuery, (snapshot) => {
       <div class="post-header">
         <div class="post-author-box">
           <img src="${post.authorAvatar || 'icons/stock.png'}" class="post-author-avatar" referrerpolicy="no-referrer" onerror="this.src='icons/stock.png'">
-          <span class="post-author-name">${post.authorName || 'User'}</span>
+          <div class="post-author-details">
+            <span class="post-author-name">${post.authorName || 'User'}</span>
+            <span class="post-time">${formatTimeAgo(post.createdAt)}</span>
+          </div>
         </div>
         <span class="post-id">#${post.postNumber || '1'}</span>
       </div>
-      <p class="post-text">${post.text}</p>
+      ${post.text ? `<p class="post-text">${post.text}</p>` : ''}
+      ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-attachment-img" alt="Post photo">` : ''}
       <div class="post-footer">
         <button class="post-action-btn like-btn" data-id="${postId}">
           <img src="${isLiked ? 'icons/heart-on.png' : 'icons/heart-off.png'}" alt="Like">
