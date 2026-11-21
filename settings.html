@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="referrer" content="no-referrer">
+  <title>Settings - my unistream blog</title>
+  <link rel="icon" href="icons/logo.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="settings-body">
+
+  <header class="app-header">
+    <div class="header-left">
+      <a href="profile.html" class="header-back-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </a>
+    </div>
+
+    <div class="header-center">
+      <span class="header-title">Settings</span>
+    </div>
+
+    <div class="header-right"></div>
+  </header>
+
+  <main class="settings-layout">
+    <!-- LEFT SIDEBAR -->
+    <aside class="settings-sidebar">
+      <button class="settings-nav-item active" data-tab="profile">
+        <span>Profile</span>
+      </button>
+      <button class="settings-nav-item" data-tab="account">
+        <span>Account</span>
+      </button>
+      <button class="settings-nav-item" data-tab="appearance">
+        <span>Appearance</span>
+      </button>
+    </aside>
+
+    <!-- RIGHT CONTENT AREA -->
+    <section class="settings-content">
+      <div class="settings-section-header">
+        <h2>Edit Profile</h2>
+        <p>Update your public identity and personalize your space</p>
+      </div>
+
+      <!-- LIVE PREVIEW CARD -->
+      <div class="preview-card-wrapper">
+        <span class="preview-label">Live Preview</span>
+        <div class="profile-preview-card">
+          <div class="preview-banner-box">
+            <img id="previewBanner" src="icons/stock.png" alt="Banner preview" class="preview-banner">
+            <div class="preview-avatar-box">
+              <img id="previewAvatar" src="icons/stock.png" alt="Avatar preview" class="preview-avatar" referrerpolicy="no-referrer">
+            </div>
+          </div>
+          <div class="preview-info-box">
+            <h4 id="previewName" class="preview-name">User Name</h4>
+            <span id="previewUsername" class="preview-username">@username</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- EDIT FORM -->
+      <form id="settingsForm" class="settings-form">
+        <div class="form-group">
+          <label for="inputName">Display Name</label>
+          <input type="text" id="inputName" placeholder="Your visible name" maxlength="32" required>
+        </div>
+
+        <div class="form-group">
+          <label for="inputUsername">Nickname</label>
+          <div class="input-prefix-box">
+            <span class="prefix">@</span>
+            <input type="text" id="inputUsername" placeholder="username" maxlength="24" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Avatar</label>
+          <div class="upload-row">
+            <input type="url" id="inputAvatarUrl" placeholder="Image URL (optional)">
+            <label class="file-picker-btn">
+              <span>Upload</span>
+              <input type="file" id="fileAvatarInput" accept="image/*" hidden>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Banner</label>
+          <div class="upload-row">
+            <input type="url" id="inputBannerUrl" placeholder="Banner image URL (optional)">
+            <label class="file-picker-btn">
+              <span>Upload</span>
+              <input type="file" id="fileBannerInput" accept="image/*" hidden>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="btnSaveProfile" class="save-settings-btn">
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script type="module">
+    import { 
+      auth, 
+      onAuthStateChanged, 
+      updateProfile, 
+      db, 
+      doc, 
+      getDoc, 
+      setDoc, 
+      serverTimestamp 
+    } from './firebase.js';
+
+    const previewBanner = document.getElementById('previewBanner');
+    const previewAvatar = document.getElementById('previewAvatar');
+    const previewName = document.getElementById('previewName');
+    const previewUsername = document.getElementById('previewUsername');
+
+    const inputName = document.getElementById('inputName');
+    const inputUsername = document.getElementById('inputUsername');
+    const inputAvatarUrl = document.getElementById('inputAvatarUrl');
+    const fileAvatarInput = document.getElementById('fileAvatarInput');
+    const inputBannerUrl = document.getElementById('inputBannerUrl');
+    const fileBannerInput = document.getElementById('fileBannerInput');
+    const settingsForm = document.getElementById('settingsForm');
+    const btnSaveProfile = document.getElementById('btnSaveProfile');
+
+    let currentUser = null;
+    let currentAvatarData = '';
+    let currentBannerData = '';
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+      currentUser = user;
+
+      // Populate basic auth info
+      inputName.value = user.displayName || '';
+      previewName.textContent = user.displayName || 'User Name';
+
+      const defaultAvatar = user.photoURL || 'icons/stock.png';
+      previewAvatar.src = defaultAvatar;
+      currentAvatarData = defaultAvatar;
+
+      const fallbackUsername = user.email ? user.email.split('@')[0] : 'user';
+      inputUsername.value = fallbackUsername;
+      previewUsername.textContent = '@' + fallbackUsername;
+
+      // Fetch custom profile document
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const data = userDocSnap.data();
+          if (data.displayName) {
+            inputName.value = data.displayName;
+            previewName.textContent = data.displayName;
+          }
+          if (data.username) {
+            inputUsername.value = data.username;
+            previewUsername.textContent = '@' + data.username;
+          }
+          if (data.avatarUrl) {
+            currentAvatarData = data.avatarUrl;
+            previewAvatar.src = data.avatarUrl;
+          }
+          if (data.bannerUrl) {
+            currentBannerData = data.bannerUrl;
+            previewBanner.src = data.bannerUrl;
+          }
+        }
+      } catch (err) {
+        console.error("Error reading profile:", err);
+      }
+    });
+
+    // Real-time live preview listeners
+    inputName.addEventListener('input', () => {
+      previewName.textContent = inputName.value.trim() || 'User Name';
+    });
+
+    inputUsername.addEventListener('input', () => {
+      const cleanUser = inputUsername.value.trim().replace(/^@/, '');
+      previewUsername.textContent = '@' + (cleanUser || 'username');
+    });
+
+    inputAvatarUrl.addEventListener('input', () => {
+      if (inputAvatarUrl.value.trim()) {
+        currentAvatarData = inputAvatarUrl.value.trim();
+        previewAvatar.src = currentAvatarData;
+      }
+    });
+
+    inputBannerUrl.addEventListener('input', () => {
+      if (inputBannerUrl.value.trim()) {
+        currentBannerData = inputBannerUrl.value.trim();
+        previewBanner.src = currentBannerData;
+      }
+    });
+
+    // File readers for local image uploads
+    fileAvatarInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        currentAvatarData = event.target.result;
+        previewAvatar.src = currentAvatarData;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    fileBannerInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        currentBannerData = event.target.result;
+        previewBanner.src = currentBannerData;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Save profile changes
+    settingsForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      btnSaveProfile.disabled = true;
+      btnSaveProfile.textContent = 'Saving...';
+
+      const newDisplayName = inputName.value.trim();
+      const newUsername = inputUsername.value.trim().replace(/^@/, '');
+
+      try {
+        await updateProfile(currentUser, {
+          displayName: newDisplayName,
+          photoURL: currentAvatarData
+        });
+
+        await setDoc(doc(db, 'users', currentUser.uid), {
+          displayName: newDisplayName,
+          username: newUsername,
+          avatarUrl: currentAvatarData,
+          bannerUrl: currentBannerData,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        btnSaveProfile.textContent = 'Saved!';
+        setTimeout(() => {
+          window.location.href = 'profile.html';
+        }, 600);
+      } catch (err) {
+        console.error("Failed to save settings:", err);
+        btnSaveProfile.disabled = false;
+        btnSaveProfile.textContent = 'Save Changes';
+      }
+    });
+  </script>
+</body>
+</html>

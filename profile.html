@@ -124,7 +124,7 @@
       }
     });
 
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = 'login.html';
         return;
@@ -136,6 +136,21 @@
 
       profileDisplayName.textContent = user.displayName || 'Anonymous User';
       profileUsername.textContent = '@' + (user.email ? user.email.split('@')[0] : 'user');
+
+      // Fetch personalized user document
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const data = userDocSnap.data();
+          if (data.displayName) profileDisplayName.textContent = data.displayName;
+          if (data.username) profileUsername.textContent = '@' + data.username;
+          if (data.avatarUrl) profileAvatar.src = data.avatarUrl;
+          if (data.bannerUrl) document.getElementById('profileBanner').src = data.bannerUrl;
+        }
+      } catch (err) {
+        console.error("Profile load error:", err);
+      }
 
       // Load user's own posts
       const userPostsQuery = query(
