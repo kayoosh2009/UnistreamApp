@@ -4,11 +4,14 @@ import {
   GoogleAuthProvider, 
   signInWithPopup, 
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  updateProfile 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
   getFirestore, 
   doc,
+  getDoc,
+  setDoc,
   collection, 
   addDoc, 
   updateDoc,
@@ -41,7 +44,10 @@ export {
   signInWithPopup, 
   signOut, 
   onAuthStateChanged,
+  updateProfile,
   doc,
+  getDoc,
+  setDoc,
   collection, 
   addDoc, 
   updateDoc,
