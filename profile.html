@@ -140,8 +140,7 @@
       // Load user's own posts
       const userPostsQuery = query(
         collection(db, 'posts'),
-        where('authorId', '==', user.uid),
-        orderBy('createdAt', 'desc')
+        where('authorId', '==', user.uid)
       );
 
       onSnapshot(userPostsQuery, (snapshot) => {
@@ -153,7 +152,13 @@
           return;
         }
 
-        snapshot.forEach((postDoc) => {
+        const sortedDocs = [...snapshot.docs].sort((a, b) => {
+          const aTime = a.data().createdAt ? a.data().createdAt.toMillis() : 0;
+          const bTime = b.data().createdAt ? b.data().createdAt.toMillis() : 0;
+          return bTime - aTime;
+        });
+
+        sortedDocs.forEach((postDoc) => {
           const post = postDoc.data();
           const postId = postDoc.id;
           const likesCount = (post.likes || []).length;
