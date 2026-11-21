@@ -114,8 +114,12 @@
           return;
         }
 
-        snapshot.forEach((doc) => {
-          const post = doc.data();
+        snapshot.forEach((postDoc) => {
+          const post = postDoc.data();
+          const likesCount = (post.likes || []).length;
+          const commentsCount = post.commentsCount || 0;
+          const viewsCount = post.views || 0;
+
           const postElement = document.createElement('div');
           postElement.className = 'post';
           postElement.innerHTML = `
@@ -127,6 +131,20 @@
               <span class="post-id">#${post.postNumber || '1'}</span>
             </div>
             <p class="post-text">${post.text}</p>
+            <div class="post-footer">
+              <div class="post-action-btn">
+                <img src="icons/heart-off.png" alt="Like">
+                <span>${likesCount}</span>
+              </div>
+              <div class="post-action-btn">
+                <img src="icons/coment.png" alt="Comments">
+                <span>${commentsCount}</span>
+              </div>
+              <div class="post-action-btn">
+                <img src="icons/view.png" alt="Views">
+                <span>${viewsCount}</span>
+              </div>
+            </div>
           `;
           userPostsFeed.appendChild(postElement);
         });
