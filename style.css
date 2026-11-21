@@ -1000,9 +1000,11 @@ body {
 }
 
 .post-attachment-img {
-  width: 100%;
-  max-height: 440px;
-  object-fit: cover;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  max-height: 500px;
+  object-fit: contain;
   border-radius: 10px;
   margin-top: 10px;
   display: block;
