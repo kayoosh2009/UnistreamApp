@@ -24,7 +24,7 @@ onSnapshot(postsQuery, (snapshot) => {
     postElement.innerHTML = `
       <div class="post-header">
         <div class="post-author-box">
-          <img src="${post.authorAvatar || 'icons/stock.png'}" class="post-author-avatar">
+          <img src="${post.authorAvatar || 'icons/stock.png'}" class="post-author-avatar" referrerpolicy="no-referrer" onerror="this.src='icons/stock.png'">
           <span class="post-author-name">${post.authorName || 'User'}</span>
         </div>
         <span class="post-id">#${post.postNumber || '1'}</span>
