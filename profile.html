@@ -23,7 +23,11 @@
       <span class="header-title">Profile</span>
     </div>
 
-    <div class="header-right"></div>
+    <div class="header-right">
+      <a href="settings.html" class="header-settings-btn">
+        <img src="icons/setting.png" alt="Settings" class="header-icon-btn">
+      </a>
+    </div>
   </header>
 
   <main class="profile-container">
@@ -56,10 +60,20 @@
       </div>
     </div>
 
-    <div class="profile-posts-section">
-      <h3 class="section-title">Posts</h3>
+    <div class="profile-tabs">
+      <button class="profile-tab active" id="tabPosts">Posts</button>
+      <button class="profile-tab" id="tabChats">Chats</button>
+    </div>
+
+    <div class="profile-content-section" id="sectionPosts">
       <div id="userPostsFeed" class="user-posts-feed">
         <p class="empty-state">No posts yet</p>
+      </div>
+    </div>
+
+    <div class="profile-content-section hidden" id="sectionChats">
+      <div id="userChatsFeed" class="user-chats-feed">
+        <p class="empty-state">No chats yet</p>
       </div>
     </div>
   </main>
@@ -77,13 +91,38 @@
   </nav>
 
   <script type="module">
-    import { auth, onAuthStateChanged, db, collection, query, where, orderBy, onSnapshot } from './firebase.js';
+    import { auth, onAuthStateChanged, db, doc, deleteDoc, collection, query, where, orderBy, onSnapshot } from './firebase.js';
 
     const profileAvatar = document.getElementById('profileAvatar');
     const profileDisplayName = document.getElementById('profileDisplayName');
     const profileUsername = document.getElementById('profileUsername');
     const statPostsCount = document.getElementById('statPostsCount');
     const userPostsFeed = document.getElementById('userPostsFeed');
+
+    const tabPosts = document.getElementById('tabPosts');
+    const tabChats = document.getElementById('tabChats');
+    const sectionPosts = document.getElementById('sectionPosts');
+    const sectionChats = document.getElementById('sectionChats');
+
+    tabPosts.addEventListener('click', () => {
+      tabPosts.classList.add('active');
+      tabChats.classList.remove('active');
+      sectionPosts.classList.remove('hidden');
+      sectionChats.classList.add('hidden');
+    });
+
+    tabChats.addEventListener('click', () => {
+      tabChats.classList.add('active');
+      tabPosts.classList.remove('active');
+      sectionChats.classList.remove('hidden');
+      sectionPosts.classList.add('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.post-menu-wrapper')) {
+        document.querySelectorAll('.post-dropdown-menu.active').forEach(m => m.classList.remove('active'));
+      }
+    });
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -116,6 +155,7 @@
 
         snapshot.forEach((postDoc) => {
           const post = postDoc.data();
+          const postId = postDoc.id;
           const likesCount = (post.likes || []).length;
           const commentsCount = post.commentsCount || 0;
           const viewsCount = post.views || 0;
@@ -128,7 +168,18 @@
                 <img src="${post.authorAvatar || 'icons/stock.png'}" class="post-author-avatar" referrerpolicy="no-referrer" onerror="this.src='icons/stock.png'">
                 <span class="post-author-name">${post.authorName || 'User'}</span>
               </div>
-              <span class="post-id">#${post.postNumber || '1'}</span>
+              <div class="post-header-actions">
+                <span class="post-id">#${post.postNumber || '1'}</span>
+                <div class="post-menu-wrapper">
+                  <button class="post-menu-btn" data-id="${postId}">
+                    <img src="icons/post-menu.png" alt="Options">
+                  </button>
+                  <div class="post-dropdown-menu" id="menu-${postId}">
+                    <button class="dropdown-item edit-btn" disabled>Edit</button>
+                    <button class="dropdown-item delete delete-btn" data-id="${postId}">Delete</button>
+                  </div>
+                </div>
+              </div>
             </div>
             <p class="post-text">${post.text}</p>
             <div class="post-footer">
@@ -146,6 +197,27 @@
               </div>
             </div>
           `;
+
+          const menuBtn = postElement.querySelector('.post-menu-btn');
+          const dropdownMenu = postElement.querySelector(`#menu-${postId}`);
+          menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.post-dropdown-menu.active').forEach(m => {
+              if (m !== dropdownMenu) m.classList.remove('active');
+            });
+            dropdownMenu.classList.toggle('active');
+          });
+
+          const deleteBtn = postElement.querySelector('.delete-btn');
+          deleteBtn.addEventListener('click', async () => {
+            dropdownMenu.classList.remove('active');
+            try {
+              await deleteDoc(doc(db, 'posts', postId));
+            } catch (err) {
+              console.error("Failed to delete post:", err);
+            }
+          });
+
           userPostsFeed.appendChild(postElement);
         });
       });
