@@ -259,6 +259,14 @@
           updatedAt: serverTimestamp()
         }, { merge: true });
 
+        // Update local cache immediately ⚡
+        localStorage.setItem('user_cached_profile', JSON.stringify({
+          displayName: newDisplayName,
+          username: newUsername,
+          avatarUrl: currentAvatarData,
+          bannerUrl: currentBannerData
+        }));
+
         btnSaveProfile.textContent = 'Saved!';
         setTimeout(() => {
           window.location.href = 'profile.html';
