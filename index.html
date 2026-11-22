@@ -23,7 +23,37 @@
     <div class="header-right"></div>
   </header>
 
-  <main class="feed-container" id="feed"></main>
+  <div class="feed-tabs-bar">
+    <button class="feed-tab-btn active" id="tabFeedGlobal">All</button>
+    <button class="feed-tab-btn" id="tabFeedRecommended">
+      <span>Recommended</span>
+      <span class="beta-badge">beta</span>
+    </button>
+    <button class="feed-tab-btn" id="tabFeedPolls">
+      <span>Polls</span>
+      <span class="beta-badge">beta</span>
+    </button>
+  </div>
+
+  <main class="feed-container">
+    <div id="feed" class="tab-feed-view"></div>
+
+    <div id="feedRecommended" class="tab-feed-view hidden">
+      <div class="beta-placeholder-card">
+        <span class="beta-pill">[beta]</span>
+        <h3>Recommended Feed</h3>
+        <p>Curated content based on tags and accounts you follow will appear here soon.</p>
+      </div>
+    </div>
+
+    <div id="feedPolls" class="tab-feed-view hidden">
+      <div class="beta-placeholder-card">
+        <span class="beta-pill">[beta]</span>
+        <h3>Interactive Polls</h3>
+        <p>Take community polls, express your opinion and collect reward points soon.</p>
+      </div>
+    </div>
+  </main>
 
   <nav class="bottom-nav">
     <button class="nav-btn" id="btnProfile">

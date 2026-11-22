@@ -59,13 +59,106 @@ body {
   width: 38px;
 }
 
+.feed-tabs-bar {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  width: 100%;
+  height: 44px;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  border-bottom: 1px solid #ededf2;
+  z-index: 90;
+  padding: 0 8px;
+}
+
+.feed-tab-btn {
+  background: none;
+  border: none;
+  padding: 10px 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #7b7b8f;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+  transition: color 0.15s ease;
+}
+
+.feed-tab-btn.active {
+  color: #030040;
+}
+
+.feed-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  width: 80%;
+  height: 2.5px;
+  background-color: #030040;
+  border-radius: 2px;
+}
+
+.beta-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #ff9500;
+  background-color: #fff6e8;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
 .feed-container {
   flex: 1;
-  margin-top: 60px;
+  margin-top: 104px;
   margin-bottom: 60px;
   overflow-y: auto;
   padding: 16px;
   background-color: #ffffff;
+}
+
+.tab-feed-view {
+  width: 100%;
+}
+
+.beta-placeholder-card {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: #fafafc;
+  border: 1px dashed #dedee6;
+  border-radius: 16px;
+  margin-top: 20px;
+}
+
+.beta-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #030040;
+  background: #ebebf5;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.beta-placeholder-card h3 {
+  font-size: 17px;
+  color: #111111;
+  margin-bottom: 6px;
+}
+
+.beta-placeholder-card p {
+  font-size: 13.5px;
+  color: #666677;
+  max-width: 320px;
+  margin: 0 auto;
+  line-height: 1.45;
 }
 
 .post {
