@@ -65,6 +65,13 @@
     const composerAvatar = document.getElementById('composerAvatar');
     const composerName = document.getElementById('composerName');
     const postInput = document.getElementById('postInput');
+
+    // Instant local cache restore ⚡
+    const cachedProfile = JSON.parse(localStorage.getItem('user_cached_profile') || 'null');
+    if (cachedProfile) {
+      if (cachedProfile.avatarUrl) composerAvatar.src = cachedProfile.avatarUrl;
+      if (cachedProfile.displayName) composerName.textContent = cachedProfile.displayName;
+    }
     const btnPublishPost = document.getElementById('btnPublishPost');
 
     let currentUser = null;
