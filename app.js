@@ -173,11 +173,21 @@ onSnapshot(postsQuery, (snapshot) => {
   });
 });
 
+// Instant render from local cache to prevent avatar flickering ⚡
+const cachedProfile = JSON.parse(localStorage.getItem('user_cached_profile') || 'null');
+if (cachedProfile && cachedProfile.avatarUrl) {
+  userAvatar.src = cachedProfile.avatarUrl;
+}
+
 let currentUser = null;
 
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
   updateHeaderAvatar(user);
+  if (user && user.photoURL && (!cachedProfile || cachedProfile.avatarUrl !== user.photoURL)) {
+    const updated = { ...(cachedProfile || {}), avatarUrl: user.photoURL };
+    localStorage.setItem('user_cached_profile', JSON.stringify(updated));
+  }
 });
 
 function requireAuth(callback) {
@@ -201,6 +211,7 @@ btnAddPost.addEventListener('click', () => {
 });
 
 logoutBtn.addEventListener('click', async () => {
+  localStorage.removeItem('user_cached_profile');
   await signOut(auth);
   closeMenu();
   window.location.href = 'login.html';
