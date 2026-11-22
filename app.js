@@ -15,6 +15,26 @@ import {
 } from './firebase.js';
 
 const feedContainer = document.getElementById('feed');
+const tabFeedGlobal = document.getElementById('tabFeedGlobal');
+const tabFeedRecommended = document.getElementById('tabFeedRecommended');
+const tabFeedPolls = document.getElementById('tabFeedPolls');
+const feedRecommended = document.getElementById('feedRecommended');
+const feedPolls = document.getElementById('feedPolls');
+
+if (tabFeedGlobal && tabFeedRecommended && tabFeedPolls) {
+  const switchFeedTab = (activeTab, activeView) => {
+    [tabFeedGlobal, tabFeedRecommended, tabFeedPolls].forEach(tab => tab.classList.remove('active'));
+    [feedContainer, feedRecommended, feedPolls].forEach(view => view.classList.add('hidden'));
+
+    activeTab.classList.add('active');
+    activeView.classList.remove('hidden');
+  };
+
+  tabFeedGlobal.addEventListener('click', () => switchFeedTab(tabFeedGlobal, feedContainer));
+  tabFeedRecommended.addEventListener('click', () => switchFeedTab(tabFeedRecommended, feedRecommended));
+  tabFeedPolls.addEventListener('click', () => switchFeedTab(tabFeedPolls, feedPolls));
+}
+
 const btnMenu = document.getElementById('btnMenu');
 const bottomSheet = document.getElementById('bottomSheet');
 const backdrop = document.getElementById('backdrop');
