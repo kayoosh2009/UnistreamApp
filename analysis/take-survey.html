@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Take Survey - my unistream blog</title>
+  <link rel="icon" href="../icons/logo.png">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="take-survey-body">
+
+  <header class="app-header">
+    <div class="header-left">
+      <a href="../index.html" class="header-back-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </a>
+    </div>
+
+    <div class="header-center">
+      <span class="header-title" id="surveyNavTitle">Survey</span>
+    </div>
+
+    <div class="header-right"></div>
+  </header>
+
+  <div class="survey-runner-progress">
+    <div class="runner-progress-fill" id="runnerProgressFill" style="width: 0%;"></div>
+  </div>
+
+  <main class="take-survey-container">
+    <div id="surveyRunnerCard" class="survey-runner-card">
+      <div class="runner-loading">Loading survey...</div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { auth, onAuthStateChanged, db, doc, getDoc, updateDoc, increment } from '../firebase.js';
+
+    const surveyRunnerCard = document.getElementById('surveyRunnerCard');
+    const runnerProgressFill = document.getElementById('runnerProgressFill');
+    const surveyNavTitle = document.getElementById('surveyNavTitle');
+
+    const params = new URLSearchParams(window.location.search);
+    const surveyId = params.get('id');
+
+    let currentUser = null;
+    let surveyData = null;
+    let slidesList = [];
+    let currentStep = 0;
+    const userAnswers = {};
+
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      if (!surveyId) {
+        surveyRunnerCard.innerHTML = '<p class="empty-state">Survey not specified</p>';
+        return;
+      }
+      await loadSurvey();
+    });
+
+    async function loadSurvey() {
+      try {
+        const snap = await getDoc(doc(db, 'surveys', surveyId));
+        if (!snap.exists()) {
+          surveyRunnerCard.innerHTML = '<p class="empty-state">Survey not found</p>';
+          return;
+        }
+
+        surveyData = snap.data();
+        surveyNavTitle.textContent = surveyData.hasWelcome && surveyData.welcome?.title 
+          ? surveyData.welcome.title 
+          : 'Survey';
+
+        slidesList = [];
+
+        // Optional welcome slide
+        if (surveyData.hasWelcome && surveyData.welcome) {
+          slidesList.push({
+            type: 'welcome',
+            ...surveyData.welcome
+          });
+        }
+
+        // Questions slides
+        if (Array.isArray(surveyData.questions) && surveyData.questions.length > 0) {
+          surveyData.questions.forEach((q, idx) => {
+            slidesList.push({
+              type: 'question',
+              index: idx,
+              ...q
+            });
+          });
+        } else if (Array.isArray(surveyData.options)) {
+          // Backward compatibility with legacy 1-question polls
+          slidesList.push({
+            type: 'question',
+            index: 0,
+            title: surveyData.question,
+            options: surveyData.options,
+            typeKind: 'choice',
+            required: true
+          });
+        }
+
+        renderStep();
+      } catch (err) {
+        console.error("Failed to load survey:", err);
+        surveyRunnerCard.innerHTML = '<p class="empty-state">Error loading survey</p>';
+      }
+    }
+
+    function renderStep() {
+      const total = slidesList.length;
+      const progressPercent = total > 0 ? Math.round(((currentStep) / total) * 100) : 0;
+      runnerProgressFill.style.width = `${progressPercent}%`;
+
+      const slide = slidesList[currentStep];
+      if (!slide) {
+        renderComplete();
+        return;
+      }
+
+      if (slide.type === 'welcome') {
+        renderWelcomeSlide(slide);
+      } else {
+        renderQuestionSlide(slide);
+      }
+    }
+
+    function renderWelcomeSlide(slide) {
+      surveyRunnerCard.innerHTML = `
+        <div class="runner-slide-content">
+          ${slide.image ? `<img src="${slide.image}" class="runner-welcome-img" alt="Cover">` : ''}
+          <h2 class="runner-welcome-title">${slide.title || 'Welcome!'}</h2>
+          ${slide.description ? `<p class="runner-welcome-desc">${slide.description}</p>` : ''}
+          <button type="button" class="runner-primary-btn" id="btnStartSurvey">Start Survey →</button>
+        </div>
+      `;
+
+      document.getElementById('btnStartSurvey').addEventListener('click', () => {
+        currentStep++;
+        renderStep();
+      });
+    }
+
+    function renderQuestionSlide(slide) {
+      const qIndex = slide.index;
+      const qType = slide.typeKind || slide.type || 'choice';
+      const isLast = currentStep === slidesList.length - 1;
+
+      let answerControlHtml = '';
+
+      if (qType === 'text') {
+        const currentVal = userAnswers[qIndex] || '';
+        answerControlHtml = `
+          <textarea id="textAnswerInput" class="runner-textarea" placeholder="Type your answer here...">${currentVal}</textarea>
+        `;
+      } else if (qType === 'scale') {
+        const currentVal = userAnswers[qIndex] || null;
+        answerControlHtml = `
+          <div class="runner-scale-selector">
+            ${[1,2,3,4,5,6,7,8,9,10].map(num => `
+              <button type="button" class="scale-choice-btn ${currentVal === num ? 'selected' : ''}" data-val="${num}">${num}</button>
+            `).join('')}
+          </div>
+          <div class="scale-labels"><span>1 (Lowest)</span><span>10 (Highest)</span></div>
+        `;
+      } else if (qType === 'multiple') {
+        const selectedArr = userAnswers[qIndex] || [];
+        answerControlHtml = `
+          <div class="runner-options-list">
+            ${(slide.options || []).map((opt, optIdx) => `
+              <div class="runner-option-btn multiple ${selectedArr.includes(optIdx) ? 'selected' : ''}" data-opt="${optIdx}">
+                <span class="check-box-icon">${selectedArr.includes(optIdx) ? '☑' : '☐'}</span>
+                <span>${opt}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        // Single choice
+        const selectedOpt = userAnswers[qIndex] !== undefined ? userAnswers[qIndex] : null;
+        answerControlHtml = `
+          <div class="runner-options-list">
+            ${(slide.options || []).map((opt, optIdx) => `
+              <div class="runner-option-btn ${selectedOpt === optIdx ? 'selected' : ''}" data-opt="${optIdx}">
+                <span class="radio-icon">${selectedOpt === optIdx ? '◉' : '○'}</span>
+                <span>${opt}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      surveyRunnerCard.innerHTML = `
+        <div class="runner-slide-content">
+          <div class="runner-step-badge">Question ${qIndex + 1} of ${surveyData.totalQuestions || surveyData.questions?.length || 1}</div>
+          ${slide.image ? `<img src="${slide.image}" class="runner-question-img" alt="Question">` : ''}
+          <h2 class="runner-question-title">${slide.title || 'Untitled question'}</h2>
+          ${slide.description ? `<p class="runner-question-desc">${slide.description}</p>` : ''}
+          
+          <div class="runner-answers-box">
+            ${answerControlHtml}
+          </div>
+
+          <div class="runner-nav-buttons">
+            ${currentStep > 0 ? `<button type="button" class="runner-secondary-btn" id="btnRunnerPrev">Back</button>` : '<div></div>'}
+            <button type="button" class="runner-primary-btn" id="btnRunnerNext">${isLast ? 'Submit Survey' : 'Next →'}</button>
+          </div>
+        </div>
+      `;
+
+      // Event listeners for answer selections
+      if (qType === 'text') {
+        document.getElementById('textAnswerInput').addEventListener('input', (e) => {
+          userAnswers[qIndex] = e.target.value.trim();
+        });
+      } else if (qType === 'scale') {
+        document.querySelectorAll('.scale-choice-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const val = parseInt(e.target.dataset.val, 10);
+            userAnswers[qIndex] = val;
+            document.querySelectorAll('.scale-choice-btn').forEach(b => b.classList.toggle('selected', parseInt(b.dataset.val, 10) === val));
+          });
+        });
+      } else if (qType === 'multiple') {
+        document.querySelectorAll('.runner-option-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const optIdx = parseInt(btn.dataset.opt, 10);
+            let arr = userAnswers[qIndex] || [];
+            if (arr.includes(optIdx)) {
+              arr = arr.filter(i => i !== optIdx);
+            } else {
+              arr.push(optIdx);
+            }
+            userAnswers[qIndex] = arr;
+            renderStep();
+          });
+        });
+      } else {
+        document.querySelectorAll('.runner-option-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const optIdx = parseInt(btn.dataset.opt, 10);
+            userAnswers[qIndex] = optIdx;
+            renderStep();
+          });
+        });
+      }
+
+      const prevBtn = document.getElementById('btnRunnerPrev');
+      if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+          currentStep--;
+          renderStep();
+        });
+      }
+
+      document.getElementById('btnRunnerNext').addEventListener('click', async () => {
+        if (slide.required && (userAnswers[qIndex] === undefined || userAnswers[qIndex] === '')) {
+          alert('This question is required.');
+          return;
+        }
+
+        if (isLast) {
+          await submitSurveyAnswers();
+        } else {
+          currentStep++;
+          renderStep();
+        }
+      });
+    }
+
+    async function submitSurveyAnswers() {
+      const submitBtn = document.getElementById('btnRunnerNext');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+      }
+
+      try {
+        const surveyRef = doc(db, 'surveys', surveyId);
+        const updatePayload = {
+          totalVotes: increment(1)
+        };
+
+        // Increment votes counter for question options
+        Object.keys(userAnswers).forEach((qIdxKey) => {
+          const val = userAnswers[qIdxKey];
+          if (typeof val === 'number') {
+            updatePayload[`votes.${val}`] = increment(1);
+          } else if (Array.isArray(val)) {
+            val.forEach(optNum => {
+              updatePayload[`votes.${optNum}`] = increment(1);
+            });
+          }
+        });
+
+        // Mark user as voted (authors can vote too!)
+        if (currentUser) {
+          updatePayload[`voters.${currentUser.uid}`] = userAnswers;
+        }
+
+        await updateDoc(surveyRef, updatePayload);
+        renderComplete();
+      } catch (err) {
+        console.error("Submission failed:", err);
+        alert('Failed to submit response. Please try again.');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Survey';
+        }
+      }
+    }
+
+    function renderComplete() {
+      runnerProgressFill.style.width = '100%';
+      const isAuthor = currentUser && surveyData && surveyData.authorId === currentUser.uid;
+
+      surveyRunnerCard.innerHTML = `
+        <div class="runner-complete-box">
+          <div class="complete-celebration-badge">✓</div>
+          <h2 class="complete-title">Thank You!</h2>
+          <p class="complete-desc">Your answers have been recorded successfully.${isAuthor ? ' (Author test vote registered)' : ''}</p>
+          <div class="complete-actions">
+            <button type="button" class="runner-primary-btn" onclick="window.location.href='../index.html'">Back to Feed</button>
+            <button type="button" class="runner-secondary-btn" onclick="window.location.href='dashboard.html'">View Analytics</button>
+          </div>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>

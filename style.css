@@ -2166,6 +2166,223 @@ body {
   opacity: 0.9;
 }
 
+/* --- TAKE SURVEY RUNNER --- */
+.take-survey-body {
+  background-color: #f6f7fb;
+}
+
+.survey-runner-progress {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background-color: #e5e7f0;
+  z-index: 95;
+}
+
+.runner-progress-fill {
+  height: 100%;
+  background-color: #030040;
+  transition: width 0.3s ease;
+}
+
+.take-survey-container {
+  margin-top: 64px;
+  padding: 24px 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 64px);
+}
+
+.survey-runner-card {
+  width: 100%;
+  max-width: 580px;
+  background-color: #ffffff;
+  border: 1px solid #e7e8f1;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+}
+
+.runner-step-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #030040;
+  background-color: #f0f1fa;
+  padding: 4px 10px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.runner-welcome-img,
+.runner-question-img {
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 18px;
+}
+
+.runner-welcome-title,
+.runner-question-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111122;
+  margin-bottom: 8px;
+  line-height: 1.35;
+}
+
+.runner-welcome-desc,
+.runner-question-desc {
+  font-size: 14px;
+  color: #666677;
+  line-height: 1.45;
+  margin-bottom: 24px;
+}
+
+.runner-answers-box {
+  margin-bottom: 26px;
+}
+
+.runner-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.runner-option-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1.5px solid #e2e4ef;
+  border-radius: 12px;
+  background-color: #ffffff;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #222233;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.runner-option-btn:hover {
+  border-color: #030040;
+  background-color: #fbfbfe;
+}
+
+.runner-option-btn.selected {
+  border-color: #030040;
+  background-color: #f2f3fc;
+  color: #030040;
+  font-weight: 600;
+}
+
+.runner-textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 12px 14px;
+  border: 1.5px solid #e2e4ef;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-family: inherit;
+  outline: none;
+}
+
+.runner-scale-selector {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+}
+
+.scale-choice-btn {
+  flex: 1;
+  padding: 12px 0;
+  border: 1.5px solid #e2e4ef;
+  border-radius: 10px;
+  background-color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  color: #444455;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scale-choice-btn.selected {
+  background-color: #030040;
+  border-color: #030040;
+  color: #ffffff;
+}
+
+.runner-nav-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 16px;
+  border-top: 1px solid #f1f2f8;
+}
+
+.runner-primary-btn {
+  padding: 12px 24px;
+  background-color: #030040;
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.runner-secondary-btn {
+  padding: 12px 18px;
+  background: none;
+  border: 1px solid #d5d7e5;
+  color: #555566;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.runner-complete-box {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.complete-celebration-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #eafaf0;
+  color: #248a3d;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.complete-title {
+  font-size: 22px;
+  color: #111122;
+  margin-bottom: 8px;
+}
+
+.complete-desc {
+  font-size: 14px;
+  color: #666677;
+  margin-bottom: 24px;
+}
+
+.complete-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
 .publish-btn {
   display: flex;
   align-items: center;

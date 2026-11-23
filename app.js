@@ -257,7 +257,7 @@ function renderSurveysFeed(snapshot) {
     `;
 
     card.querySelector('.btn-open-poll').addEventListener('click', () => {
-      window.location.href = `analysis/dashboard.html`;
+      window.location.href = `analysis/take-survey.html?id=${surveyId}`;
     });
 
     publicPollsList.appendChild(card);
