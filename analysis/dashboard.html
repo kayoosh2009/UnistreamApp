@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Survey Analytics - my unistream blog</title>
+  <link rel="icon" href="../icons/logo.png">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="analytics-body">
+
+  <header class="app-header">
+    <div class="header-left">
+      <a href="../index.html" class="header-back-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </a>
+    </div>
+
+    <div class="header-center">
+      <span class="header-title">Analytics Dashboard</span>
+    </div>
+
+    <div class="header-right">
+      <a href="new-survey.html" class="header-action-link" title="New survey">
+        <img src="../icons/add.png" alt="Create" class="header-icon-btn">
+      </a>
+    </div>
+  </header>
+
+  <main class="analytics-container">
+    <div class="analytics-overview-cards">
+      <div class="analytic-card">
+        <span class="analytic-value" id="totalSurveysCount">0</span>
+        <span class="analytic-label">My Surveys</span>
+      </div>
+      <div class="analytic-card">
+        <span class="analytic-value" id="totalVotesCount">0</span>
+        <span class="analytic-label">Total Votes</span>
+      </div>
+    </div>
+
+    <div class="analytics-section-title-row">
+      <h3>Active Surveys</h3>
+      <a href="new-survey.html" class="create-survey-pill-btn">+ Create Survey</a>
+    </div>
+
+    <div id="surveysList" class="surveys-list">
+      <p class="empty-state">No surveys created yet</p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { auth, onAuthStateChanged, db, collection, query, where, onSnapshot } from '../firebase.js';
+
+    const totalSurveysCount = document.getElementById('totalSurveysCount');
+    const totalVotesCount = document.getElementById('totalVotesCount');
+    const surveysList = document.getElementById('surveysList');
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = '../login.html';
+        return;
+      }
+
+      const surveysQuery = query(
+        collection(db, 'surveys'),
+        where('authorId', '==', user.uid)
+      );
+
+      onSnapshot(surveysQuery, (snapshot) => {
+        surveysList.innerHTML = '';
+        totalSurveysCount.textContent = snapshot.size;
+
+        let totalVotes = 0;
+
+        if (snapshot.empty) {
+          surveysList.innerHTML = '<p class="empty-state">No surveys created yet</p>';
+          totalVotesCount.textContent = '0';
+          return;
+        }
+
+        snapshot.forEach((docSnap) => {
+          const survey = docSnap.data();
+          const surveyVotes = survey.totalVotes || 0;
+          totalVotes += surveyVotes;
+
+          const card = document.createElement('div');
+          card.className = 'survey-analytic-card';
+
+          let optionsHtml = '';
+          (survey.options || []).forEach((opt, idx) => {
+            const count = (survey.votes && survey.votes[idx]) || 0;
+            const percent = surveyVotes > 0 ? Math.round((count / surveyVotes) * 100) : 0;
+            optionsHtml += `
+              <div class="analytic-option-row">
+                <div class="analytic-option-header">
+                  <span>${opt}</span>
+                  <span class="analytic-option-stats">${count} votes (${percent}%)</span>
+                </div>
+                <div class="analytic-progress-track">
+                  <div class="analytic-progress-fill" style="width: ${percent}%;"></div>
+                </div>
+              </div>
+            `;
+          });
+
+          card.innerHTML = `
+            <h4 class="survey-question">${survey.question}</h4>
+            <div class="survey-options-wrapper">
+              ${optionsHtml}
+            </div>
+            <div class="survey-meta-footer">
+              <span>Total responses: ${surveyVotes}</span>
+            </div>
+          `;
+          surveysList.appendChild(card);
+        });
+
+        totalVotesCount.textContent = totalVotes;
+      });
+    });
+  </script>
+</body>
+</html>
