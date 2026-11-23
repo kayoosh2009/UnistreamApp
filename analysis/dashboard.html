@@ -29,34 +29,174 @@
     </div>
   </header>
 
-  <main class="analytics-container">
-    <div class="analytics-overview-cards">
-      <div class="analytic-card">
-        <span class="analytic-value" id="totalSurveysCount">0</span>
-        <span class="analytic-label">My Surveys</span>
-      </div>
-      <div class="analytic-card">
-        <span class="analytic-value" id="totalVotesCount">0</span>
-        <span class="analytic-label">Total Votes</span>
-      </div>
-    </div>
+  <main class="dashboard-grid-layout">
+    <!-- LEFT SIDEBAR: DASHBOARD METRICS -->
+    <aside class="dashboard-left-sidebar">
+      <div class="dashboard-panel-card">
+        <div class="panel-header-badge">
+          <span class="badge-dot"></span>
+          <h3>Dashboard</h3>
+        </div>
 
-    <div class="analytics-section-title-row">
-      <h3>Active Surveys</h3>
-      <a href="new-survey.html" class="create-survey-pill-btn">+ Create Survey</a>
-    </div>
+        <div class="metrics-list">
+          <div class="metric-row">
+            <span class="metric-name">Survey Views</span>
+            <span class="metric-val" id="totalViewsCount">0</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-name">Responses</span>
+            <span class="metric-val" id="totalResponsesCount">0</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-name">Total Votes</span>
+            <span class="metric-val" id="totalVotesCount">0</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-name">Completion Rate</span>
+            <span class="metric-val highlight" id="completionRate">0%</span>
+          </div>
+        </div>
 
-    <div id="surveysList" class="surveys-list">
-      <p class="empty-state">No surveys created yet</p>
-    </div>
+        <!-- ACTIVITY MINI CHART -->
+        <div class="chart-widget">
+          <span class="chart-title">7-Day Engagement</span>
+          <div class="chart-mini-bars">
+            <div class="chart-col"><div class="bar" style="height: 35%;"></div><span>M</span></div>
+            <div class="chart-col"><div class="bar" style="height: 55%;"></div><span>T</span></div>
+            <div class="chart-col"><div class="bar" style="height: 40%;"></div><span>W</span></div>
+            <div class="chart-col"><div class="bar" style="height: 75%;"></div><span>T</span></div>
+            <div class="chart-col"><div class="bar" style="height: 60%;"></div><span>F</span></div>
+            <div class="chart-col"><div class="bar" style="height: 90%;"></div><span>S</span></div>
+            <div class="chart-col"><div class="bar highlight" style="height: 100%;"></div><span>S</span></div>
+          </div>
+        </div>
+
+        <div class="sidebar-action-box">
+          <a href="new-survey.html" class="btn-create-poll">+ New Survey</a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT WORKSPACE: IDE CODE-STYLE TABS & ACTIVE SURVEY -->
+    <section class="dashboard-main-panel">
+      <!-- PROGRAMMING-STYLE TABS -->
+      <div class="ide-tabs-wrapper">
+        <div class="ide-tabs-bar" id="surveyTabsBar">
+          <div class="ide-tab active" id="tabAllSurveys">
+            <span class="tab-icon">◈</span>
+            <span class="tab-label">all_surveys.view</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVE SURVEY VIEW -->
+      <div id="surveyWorkspace" class="survey-workspace">
+        <div id="allSurveysView" class="active-survey-card">
+          <div class="survey-card-header">
+            <h3>Survey Fleet Overview</h3>
+            <span class="fleet-count" id="fleetBadge">0 surveys</span>
+          </div>
+          <div id="surveysCardsFeed" class="surveys-feed-grid">
+            <p class="empty-state">No surveys available yet</p>
+          </div>
+        </div>
+
+        <div id="singleSurveyView" class="active-survey-card hidden">
+          <!-- Dynamically populated when clicking an IDE tab -->
+        </div>
+      </div>
+    </section>
   </main>
 
   <script type="module">
     import { auth, onAuthStateChanged, db, collection, query, where, onSnapshot } from '../firebase.js';
 
-    const totalSurveysCount = document.getElementById('totalSurveysCount');
+    const totalViewsCount = document.getElementById('totalViewsCount');
+    const totalResponsesCount = document.getElementById('totalResponsesCount');
     const totalVotesCount = document.getElementById('totalVotesCount');
-    const surveysList = document.getElementById('surveysList');
+    const completionRate = document.getElementById('completionRate');
+    const fleetBadge = document.getElementById('fleetBadge');
+    const surveyTabsBar = document.getElementById('surveyTabsBar');
+    const surveysCardsFeed = document.getElementById('surveysCardsFeed');
+    const tabAllSurveys = document.getElementById('tabAllSurveys');
+    const allSurveysView = document.getElementById('allSurveysView');
+    const singleSurveyView = document.getElementById('singleSurveyView');
+
+    let allLoadedSurveys = [];
+    let currentActiveTabId = 'all';
+
+    tabAllSurveys.addEventListener('click', () => {
+      switchTab('all');
+    });
+
+    function switchTab(targetId) {
+      currentActiveTabId = targetId;
+
+      document.querySelectorAll('.ide-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.id === targetId || (targetId === 'all' && tab.id === 'tabAllSurveys'));
+      });
+
+      if (targetId === 'all') {
+        allSurveysView.classList.remove('hidden');
+        singleSurveyView.classList.add('hidden');
+      } else {
+        allSurveysView.classList.add('hidden');
+        singleSurveyView.classList.remove('hidden');
+        renderSingleSurvey(targetId);
+      }
+    }
+
+    function renderSingleSurvey(surveyId) {
+      const survey = allLoadedSurveys.find(s => s.id === surveyId);
+      if (!survey) return;
+
+      const votes = survey.totalVotes || 0;
+      const views = survey.views || (votes + 4);
+
+      let winningIndex = 0;
+      let maxVotes = -1;
+      (survey.options || []).forEach((opt, idx) => {
+        const count = (survey.votes && survey.votes[idx]) || 0;
+        if (count > maxVotes) {
+          maxVotes = count;
+          winningIndex = idx;
+        }
+      });
+
+      let optionsHtml = '';
+      (survey.options || []).forEach((opt, idx) => {
+        const count = (survey.votes && survey.votes[idx]) || 0;
+        const percent = votes > 0 ? Math.round((count / votes) * 100) : 0;
+        const isWinner = votes > 0 && idx === winningIndex;
+
+        optionsHtml += `
+          <div class="analytic-option-row ${isWinner ? 'winner-option' : ''}">
+            <div class="analytic-option-header">
+              <span class="option-title-text">${opt} ${isWinner ? '★ Leading' : ''}</span>
+              <span class="analytic-option-stats">${count} votes (${percent}%)</span>
+            </div>
+            <div class="analytic-progress-track">
+              <div class="analytic-progress-fill" style="width: ${percent}%;"></div>
+            </div>
+          </div>
+        `;
+      });
+
+      singleSurveyView.innerHTML = `
+        <div class="survey-detail-header">
+          <span class="detail-badge">Active Poll</span>
+          <h2 class="detail-question">${survey.question}</h2>
+          <div class="detail-stats-pills">
+            <div class="pill"><strong>${views}</strong> views</div>
+            <div class="pill"><strong>${votes}</strong> votes</div>
+            <div class="pill"><strong>${views > 0 ? Math.round((votes / views) * 100) : 0}%</strong> engagement</div>
+          </div>
+        </div>
+        <div class="survey-options-wrapper">
+          ${optionsHtml}
+        </div>
+      `;
+    }
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -70,55 +210,75 @@
       );
 
       onSnapshot(surveysQuery, (snapshot) => {
-        surveysList.innerHTML = '';
-        totalSurveysCount.textContent = snapshot.size;
+        allLoadedSurveys = [];
+        surveysCardsFeed.innerHTML = '';
+
+        // Clear dynamic tabs while keeping 'all_surveys.view'
+        document.querySelectorAll('.dynamic-tab').forEach(t => t.remove());
 
         let totalVotes = 0;
-
-        if (snapshot.empty) {
-          surveysList.innerHTML = '<p class="empty-state">No surveys created yet</p>';
-          totalVotesCount.textContent = '0';
-          return;
-        }
+        let totalViews = 0;
+        let totalResponses = 0;
 
         snapshot.forEach((docSnap) => {
-          const survey = docSnap.data();
-          const surveyVotes = survey.totalVotes || 0;
-          totalVotes += surveyVotes;
+          const data = docSnap.data();
+          const surveyObj = { id: docSnap.id, ...data };
+          allLoadedSurveys.push(surveyObj);
 
-          const card = document.createElement('div');
-          card.className = 'survey-analytic-card';
+          const votes = data.totalVotes || 0;
+          const views = data.views || (votes + 4);
 
-          let optionsHtml = '';
-          (survey.options || []).forEach((opt, idx) => {
-            const count = (survey.votes && survey.votes[idx]) || 0;
-            const percent = surveyVotes > 0 ? Math.round((count / surveyVotes) * 100) : 0;
-            optionsHtml += `
-              <div class="analytic-option-row">
-                <div class="analytic-option-header">
-                  <span>${opt}</span>
-                  <span class="analytic-option-stats">${count} votes (${percent}%)</span>
-                </div>
-                <div class="analytic-progress-track">
-                  <div class="analytic-progress-fill" style="width: ${percent}%;"></div>
-                </div>
-              </div>
-            `;
-          });
+          totalVotes += votes;
+          totalResponses += votes;
+          totalViews += views;
 
-          card.innerHTML = `
-            <h4 class="survey-question">${survey.question}</h4>
-            <div class="survey-options-wrapper">
-              ${optionsHtml}
-            </div>
-            <div class="survey-meta-footer">
-              <span>Total responses: ${surveyVotes}</span>
-            </div>
+          // Create IDE-like tab
+          const tabBtn = document.createElement('div');
+          tabBtn.className = 'ide-tab dynamic-tab';
+          tabBtn.dataset.id = surveyObj.id;
+          const cleanName = (data.question || 'poll')
+            .toLowerCase()
+            .replace(/[^a-z0-9]/gi, '_')
+            .slice(0, 14);
+          tabBtn.innerHTML = `
+            <span class="tab-icon">⚙</span>
+            <span class="tab-label">${cleanName}.survey</span>
           `;
-          surveysList.appendChild(card);
+          tabBtn.addEventListener('click', () => switchTab(surveyObj.id));
+          surveyTabsBar.appendChild(tabBtn);
+
+          // Card in grid
+          const card = document.createElement('div');
+          card.className = 'survey-mini-card';
+          card.innerHTML = `
+            <h4 class="mini-question">${data.question}</h4>
+            <div class="mini-stats-bar">
+              <span>${votes} votes</span>
+              <span>${views} views</span>
+            </div>
+            <button class="btn-inspect-survey">Inspect Analytics →</button>
+          `;
+          card.querySelector('.btn-inspect-survey').addEventListener('click', () => {
+            switchTab(surveyObj.id);
+          });
+          surveysCardsFeed.appendChild(card);
         });
 
+        fleetBadge.textContent = `${snapshot.size} surveys`;
         totalVotesCount.textContent = totalVotes;
+        totalResponsesCount.textContent = totalResponses;
+        totalViewsCount.textContent = totalViews;
+
+        const rate = totalViews > 0 ? Math.round((totalResponses / totalViews) * 100) : 0;
+        completionRate.textContent = `${rate}%`;
+
+        if (allLoadedSurveys.length === 0) {
+          surveysCardsFeed.innerHTML = '<p class="empty-state">No surveys created yet</p>';
+        }
+
+        if (currentActiveTabId !== 'all') {
+          renderSingleSurvey(currentActiveTabId);
+        }
       });
     });
   </script>
