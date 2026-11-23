@@ -25,44 +25,67 @@
     <div class="header-right"></div>
   </header>
 
-  <main class="new-survey-container">
-    <form id="newSurveyForm" class="new-survey-form">
-      <div class="form-group">
-        <label for="surveyQuestion">Poll Question</label>
-        <input type="text" id="surveyQuestion" placeholder="Ask your question..." maxlength="120" required autofocus>
+  <main class="slide-builder-layout">
+    <!-- SLIDES THUMBNAILS RAIL -->
+    <aside class="slides-rail">
+      <div class="slides-rail-header">
+        <span class="rail-title">Slides</span>
+        <button type="button" id="btnToggleWelcome" class="btn-toggle-welcome">+ Welcome</button>
       </div>
 
-      <div class="form-group">
-        <label>Options</label>
-        <div id="optionsList" class="options-inputs-list">
-          <div class="option-input-row">
-            <input type="text" class="survey-option-input" placeholder="Option 1" required maxlength="60">
-          </div>
-          <div class="option-input-row">
-            <input type="text" class="survey-option-input" placeholder="Option 2" required maxlength="60">
-          </div>
-        </div>
-        <button type="button" id="btnAddOption" class="add-option-btn">+ Add another option</button>
+      <div id="slidesThumbnailsList" class="slides-thumbs-list">
+        <!-- Thumbnails populated dynamically -->
       </div>
 
-      <div class="form-actions">
-        <button type="submit" id="btnPublishSurvey" class="publish-survey-btn">
+      <button type="button" id="btnAddQuestionSlide" class="btn-add-slide-rail">
+        + Add Question
+      </button>
+
+      <div class="rail-footer">
+        <button type="button" id="btnPublishSurvey" class="publish-survey-btn">
           Publish Survey
         </button>
       </div>
-    </form>
+    </aside>
+
+    <!-- ACTIVE SLIDE EDITOR CANVAS -->
+    <section class="slide-editor-canvas" id="slideEditorCanvas">
+      <!-- Injected dynamically via JS based on active slide -->
+    </section>
   </main>
 
   <script type="module">
     import { auth, onAuthStateChanged, db, collection, addDoc, serverTimestamp } from '../firebase.js';
 
-    const newSurveyForm = document.getElementById('newSurveyForm');
-    const optionsList = document.getElementById('optionsList');
-    const btnAddOption = document.getElementById('btnAddOption');
+    const slidesThumbnailsList = document.getElementById('slidesThumbnailsList');
+    const slideEditorCanvas = document.getElementById('slideEditorCanvas');
+    const btnToggleWelcome = document.getElementById('btnToggleWelcome');
+    const btnAddQuestionSlide = document.getElementById('btnAddQuestionSlide');
     const btnPublishSurvey = document.getElementById('btnPublishSurvey');
-    const surveyQuestion = document.getElementById('surveyQuestion');
 
     let currentUser = null;
+
+    const surveyState = {
+      hasWelcome: false,
+      welcome: {
+        title: '',
+        description: '',
+        image: null
+      },
+      questions: [
+        {
+          id: 'q_1',
+          title: '',
+          description: '',
+          image: null,
+          type: 'choice', // 'text' | 'choice' | 'multiple' | 'scale'
+          options: ['Option 1', 'Option 2'],
+          required: true
+        }
+      ]
+    };
+
+    let activeSlideIndex = 0; // 'welcome' or 0, 1, 2...
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -72,46 +95,368 @@
       currentUser = user;
     });
 
-    btnAddOption.addEventListener('click', () => {
-      const currentInputs = optionsList.querySelectorAll('.option-input-row');
-      if (currentInputs.length >= 6) return;
-
-      const row = document.createElement('div');
-      row.className = 'option-input-row';
-      row.innerHTML = `
-        <input type="text" class="survey-option-input" placeholder="Option ${currentInputs.length + 1}" required maxlength="60">
-        <button type="button" class="remove-option-btn">&times;</button>
-      `;
-
-      row.querySelector('.remove-option-btn').addEventListener('click', () => {
-        row.remove();
-      });
-
-      optionsList.appendChild(row);
+    btnToggleWelcome.addEventListener('click', () => {
+      surveyState.hasWelcome = !surveyState.hasWelcome;
+      btnToggleWelcome.textContent = surveyState.hasWelcome ? '✓ Welcome' : '+ Welcome';
+      btnToggleWelcome.classList.toggle('active', surveyState.hasWelcome);
+      if (surveyState.hasWelcome) {
+        activeSlideIndex = 'welcome';
+      } else if (activeSlideIndex === 'welcome') {
+        activeSlideIndex = 0;
+      }
+      render();
     });
 
-    newSurveyForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    btnAddQuestionSlide.addEventListener('click', () => {
+      surveyState.questions.push({
+        id: 'q_' + (Date.now()),
+        title: '',
+        description: '',
+        image: null,
+        type: 'choice',
+        options: ['Option 1', 'Option 2'],
+        required: true
+      });
+      activeSlideIndex = surveyState.questions.length - 1;
+      render();
+    });
+
+    function renderThumbnails() {
+      slidesThumbnailsList.innerHTML = '';
+
+      if (surveyState.hasWelcome) {
+        const welcomeThumb = document.createElement('div');
+        welcomeThumb.className = `slide-thumb-card ${activeSlideIndex === 'welcome' ? 'active' : ''}`;
+        welcomeThumb.innerHTML = `
+          <div class="thumb-badge">Intro</div>
+          <span class="thumb-title">${surveyState.welcome.title || 'Welcome Slide'}</span>
+        `;
+        welcomeThumb.addEventListener('click', () => {
+          activeSlideIndex = 'welcome';
+          render();
+        });
+        slidesThumbnailsList.appendChild(welcomeThumb);
+      }
+
+      surveyState.questions.forEach((q, idx) => {
+        const qThumb = document.createElement('div');
+        qThumb.className = `slide-thumb-card ${activeSlideIndex === idx ? 'active' : ''}`;
+        qThumb.innerHTML = `
+          <div class="thumb-badge">Q${idx + 1} • ${q.type}</div>
+          <span class="thumb-title">${q.title || 'Untitled Question'}</span>
+        `;
+        qThumb.addEventListener('click', () => {
+          activeSlideIndex = idx;
+          render();
+        });
+        slidesThumbnailsList.appendChild(qThumb);
+      });
+    }
+
+    function renderEditor() {
+      slideEditorCanvas.innerHTML = '';
+
+      if (activeSlideIndex === 'welcome') {
+        renderWelcomeEditor();
+      } else {
+        renderQuestionEditor(activeSlideIndex);
+      }
+    }
+
+    function renderWelcomeEditor() {
+      const card = document.createElement('div');
+      card.className = 'editor-card';
+      card.innerHTML = `
+        <div class="editor-card-header">
+          <h3>Welcome Slide</h3>
+          <span class="editor-hint">First impression for your survey</span>
+        </div>
+
+        <div class="editor-image-box">
+          ${surveyState.welcome.image ? `
+            <div class="attached-img-wrap">
+              <img src="${surveyState.welcome.image}" class="slide-attached-img" alt="Welcome photo">
+              <button type="button" class="btn-remove-slide-img">&times;</button>
+            </div>
+          ` : `
+            <label class="slide-img-upload-label">
+              <span>+ Add Cover Image (Optional)</span>
+              <input type="file" class="slide-file-input" accept="image/*" hidden>
+            </label>
+          `}
+        </div>
+
+        <div class="form-group">
+          <label>Headline</label>
+          <input type="text" id="welcomeTitleInput" value="${surveyState.welcome.title}" placeholder="Welcome to our community survey" maxlength="120">
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="welcomeDescInput" rows="3" placeholder="Tell participants what this survey is about...">${surveyState.welcome.description}</textarea>
+        </div>
+      `;
+
+      card.querySelector('#welcomeTitleInput').addEventListener('input', (e) => {
+        surveyState.welcome.title = e.target.value;
+        renderThumbnails();
+      });
+
+      card.querySelector('#welcomeDescInput').addEventListener('input', (e) => {
+        surveyState.welcome.description = e.target.value;
+      });
+
+      const fileInput = card.querySelector('.slide-file-input');
+      if (fileInput) {
+        fileInput.addEventListener('change', (e) => handleImageUpload(e, (data) => {
+          surveyState.welcome.image = data;
+          render();
+        }));
+      }
+
+      const removeImgBtn = card.querySelector('.btn-remove-slide-img');
+      if (removeImgBtn) {
+        removeImgBtn.addEventListener('click', () => {
+          surveyState.welcome.image = null;
+          render();
+        });
+      }
+
+      slideEditorCanvas.appendChild(card);
+    }
+
+    function renderQuestionEditor(idx) {
+      const q = surveyState.questions[idx];
+      const card = document.createElement('div');
+      card.className = 'editor-card';
+
+      let answersSpecificHtml = '';
+
+      if (q.type === 'text') {
+        answersSpecificHtml = `
+          <div class="answer-type-preview">
+            <input type="text" placeholder="User will type their answer here..." disabled class="disabled-answer-preview">
+          </div>
+        `;
+      } else if (q.type === 'scale') {
+        answersSpecificHtml = `
+          <div class="answer-type-preview">
+            <div class="scale-visual-bar">
+              ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => `<span class="scale-dot">${n}</span>`).join('')}
+            </div>
+            <div class="scale-labels"><span>1 (Lowest)</span><span>10 (Highest)</span></div>
+          </div>
+        `;
+      } else {
+        // Choice or Multiple checklist
+        let optionsListHtml = '';
+        (q.options || []).forEach((opt, optIdx) => {
+          optionsListHtml += `
+            <div class="option-edit-row">
+              <span class="option-marker">${q.type === 'multiple' ? '☑' : '◉'}</span>
+              <input type="text" class="opt-val-input" data-index="${optIdx}" value="${opt}" placeholder="Option ${optIdx + 1}" maxlength="60">
+              ${q.options.length > 2 ? `<button type="button" class="btn-remove-opt" data-index="${optIdx}">&times;</button>` : ''}
+            </div>
+          `;
+        });
+
+        answersSpecificHtml = `
+          <div class="options-editor-box">
+            <div class="options-rows-list">${optionsListHtml}</div>
+            ${q.options.length < 8 ? `<button type="button" class="btn-add-opt-field">+ Add Option</button>` : ''}
+          </div>
+        `;
+      }
+
+      card.innerHTML = `
+        <div class="editor-card-header">
+          <div class="question-title-wrap">
+            <span class="editor-q-num">Question ${idx + 1}</span>
+            <div class="required-toggle-wrap">
+              <input type="checkbox" id="qRequiredCheck" ${q.required ? 'checked' : ''}>
+              <label for="qRequiredCheck">Required</label>
+            </div>
+          </div>
+          ${surveyState.questions.length > 1 ? `<button type="button" class="btn-delete-q-slide">Delete</button>` : ''}
+        </div>
+
+        <div class="editor-image-box">
+          ${q.image ? `
+            <div class="attached-img-wrap">
+              <img src="${q.image}" class="slide-attached-img" alt="Question photo">
+              <button type="button" class="btn-remove-slide-img">&times;</button>
+            </div>
+          ` : `
+            <label class="slide-img-upload-label">
+              <span>+ Add Image (Optional)</span>
+              <input type="file" class="slide-file-input" accept="image/*" hidden>
+            </label>
+          `}
+        </div>
+
+        <div class="form-group">
+          <label>Question</label>
+          <input type="text" id="qTitleInput" value="${q.title}" placeholder="What would you like to ask?" maxlength="140" required>
+        </div>
+
+        <div class="form-group">
+          <label>Additional Text (Optional)</label>
+          <input type="text" id="qDescInput" value="${q.description}" placeholder="Extra context or instructions..." maxlength="180">
+        </div>
+
+        <div class="form-group">
+          <label>Answer Type</label>
+          <select id="qTypeSelect" class="answer-type-dropdown">
+            <option value="choice" ${q.type === 'choice' ? 'selected' : ''}>Single Choice</option>
+            <option value="multiple" ${q.type === 'multiple' ? 'selected' : ''}>Checklist (Multiple)</option>
+            <option value="text" ${q.type === 'text' ? 'selected' : ''}>Text Answer</option>
+            <option value="scale" ${q.type === 'scale' ? 'selected' : ''}>Scale (1 to 10)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Answers Configuration</label>
+          ${answersSpecificHtml}
+        </div>
+      `;
+
+      card.querySelector('#qTitleInput').addEventListener('input', (e) => {
+        q.title = e.target.value;
+        renderThumbnails();
+      });
+
+      card.querySelector('#qDescInput').addEventListener('input', (e) => {
+        q.description = e.target.value;
+      });
+
+      card.querySelector('#qRequiredCheck').addEventListener('change', (e) => {
+        q.required = e.target.checked;
+      });
+
+      card.querySelector('#qTypeSelect').addEventListener('change', (e) => {
+        q.type = e.target.value;
+        if ((q.type === 'choice' || q.type === 'multiple') && (!q.options || q.options.length < 2)) {
+          q.options = ['Option 1', 'Option 2'];
+        }
+        render();
+      });
+
+      const fileInput = card.querySelector('.slide-file-input');
+      if (fileInput) {
+        fileInput.addEventListener('change', (e) => handleImageUpload(e, (data) => {
+          q.image = data;
+          render();
+        }));
+      }
+
+      const removeImgBtn = card.querySelector('.btn-remove-slide-img');
+      if (removeImgBtn) {
+        removeImgBtn.addEventListener('click', () => {
+          q.image = null;
+          render();
+        });
+      }
+
+      const deleteQBtn = card.querySelector('.btn-delete-q-slide');
+      if (deleteQBtn) {
+        deleteQBtn.addEventListener('click', () => {
+          surveyState.questions.splice(idx, 1);
+          activeSlideIndex = Math.max(0, idx - 1);
+          render();
+        });
+      }
+
+      card.querySelectorAll('.opt-val-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const optIdx = parseInt(e.target.dataset.index, 10);
+          q.options[optIdx] = e.target.value;
+        });
+      });
+
+      card.querySelectorAll('.btn-remove-opt').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const optIdx = parseInt(e.target.dataset.index, 10);
+          q.options.splice(optIdx, 1);
+          render();
+        });
+      });
+
+      const addOptBtn = card.querySelector('.btn-add-opt-field');
+      if (addOptBtn) {
+        addOptBtn.addEventListener('click', () => {
+          q.options.push(`Option ${q.options.length + 1}`);
+          render();
+        });
+      }
+
+      slideEditorCanvas.appendChild(card);
+    }
+
+    function handleImageUpload(e, callback) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxDim = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height && width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          callback(canvas.toDataURL('image/jpeg', 0.75));
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function render() {
+      renderThumbnails();
+      renderEditor();
+    }
+
+    render();
+
+    btnPublishSurvey.addEventListener('click', async () => {
       if (!currentUser) return;
 
-      const question = surveyQuestion.value.trim();
-      const optionInputs = optionsList.querySelectorAll('.survey-option-input');
-      const options = Array.from(optionInputs)
-        .map(input => input.value.trim())
-        .filter(val => val.length > 0);
-
-      if (!question || options.length < 2) return;
+      const invalidQ = surveyState.questions.find(q => !q.title.trim());
+      if (invalidQ) {
+        alert('Please fill in the title for all question slides.');
+        return;
+      }
 
       btnPublishSurvey.disabled = true;
       btnPublishSurvey.textContent = 'Publishing...';
 
       try {
+        const primaryQuestion = surveyState.hasWelcome && surveyState.welcome.title.trim()
+          ? surveyState.welcome.title.trim()
+          : surveyState.questions[0].title.trim();
+
         await addDoc(collection(db, 'surveys'), {
-          question: question,
-          options: options,
-          votes: {},
-          voters: {},
+          question: primaryQuestion,
+          hasWelcome: surveyState.hasWelcome,
+          welcome: surveyState.welcome,
+          questions: surveyState.questions,
+          totalQuestions: surveyState.questions.length,
           totalVotes: 0,
+          views: 0,
           authorId: currentUser.uid,
           authorName: currentUser.displayName || 'User',
           authorAvatar: currentUser.photoURL || '../icons/stock.png',
