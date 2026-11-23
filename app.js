@@ -15,6 +15,7 @@ import {
 } from './firebase.js';
 
 const feedContainer = document.getElementById('feed');
+const publicPollsList = document.getElementById('publicPollsList');
 const tabFeedGlobal = document.getElementById('tabFeedGlobal');
 const tabFeedRecommended = document.getElementById('tabFeedRecommended');
 const tabFeedPolls = document.getElementById('tabFeedPolls');
@@ -188,7 +189,88 @@ onAuthStateChanged(auth, (user) => {
     const updated = { ...(cachedProfile || {}), avatarUrl: user.photoURL };
     localStorage.setItem('user_cached_profile', JSON.stringify(updated));
   }
+  loadPublicSurveys();
 });
+
+// Real-time public polls feed
+let cachedSurveysSnapshot = null;
+
+function renderSurveysFeed(snapshot) {
+  if (!publicPollsList) return;
+  publicPollsList.innerHTML = '';
+
+  if (snapshot.empty) {
+    publicPollsList.innerHTML = '<p class="empty-state">No polls available</p>';
+    return;
+  }
+
+  snapshot.forEach((docSnap) => {
+    const survey = docSnap.data();
+    const surveyId = docSnap.id;
+
+    const isCompleted = Boolean(
+      currentUser && 
+      survey.voters && 
+      (survey.voters[currentUser.uid] !== undefined || (Array.isArray(survey.completedUsers) && survey.completedUsers.includes(currentUser.uid)))
+    );
+
+    const welcomeImg = (survey.welcome && survey.welcome.image) || null;
+    const title = (survey.hasWelcome && survey.welcome?.title) || survey.question || 'Community Survey';
+    const desc = (survey.hasWelcome && survey.welcome?.description) || '';
+    const qCount = survey.totalQuestions || (survey.questions ? survey.questions.length : 1);
+    const votesCount = survey.totalVotes || 0;
+
+    const card = document.createElement('div');
+    card.className = 'public-poll-card';
+    card.innerHTML = `
+      ${welcomeImg ? `
+        <div class="poll-cover-wrap">
+          <img src="${welcomeImg}" class="poll-cover-img" alt="Poll cover">
+        </div>
+      ` : ''}
+      <div class="poll-card-body">
+        <div class="poll-card-top">
+          <div class="poll-author-info">
+            <img src="${survey.authorAvatar || 'icons/stock.png'}" class="poll-author-avatar" referrerpolicy="no-referrer">
+            <span>${survey.authorName || 'Creator'}</span>
+          </div>
+          ${isCompleted 
+            ? `<span class="poll-badge-status completed">✓ Completed</span>` 
+            : `<span class="poll-badge-status active">Active Poll</span>`
+          }
+        </div>
+
+        <h3 class="poll-card-headline">${title}</h3>
+        ${desc ? `<p class="poll-card-desc">${desc}</p>` : ''}
+
+        <div class="poll-card-footer">
+          <div class="poll-stats-meta">
+            <span>${qCount} Questions</span>
+            <span>•</span>
+            <span>${votesCount} Votes</span>
+          </div>
+          <button class="btn-open-poll ${isCompleted ? 'done' : ''}" data-id="${surveyId}">
+            ${isCompleted ? 'View Results' : 'Take Poll →'}
+          </button>
+        </div>
+      </div>
+    `;
+
+    card.querySelector('.btn-open-poll').addEventListener('click', () => {
+      window.location.href = `analysis/dashboard.html`;
+    });
+
+    publicPollsList.appendChild(card);
+  });
+}
+
+function loadPublicSurveys() {
+  const surveysFeedQuery = query(collection(db, 'surveys'), orderBy('createdAt', 'desc'));
+  onSnapshot(surveysFeedQuery, (snapshot) => {
+    cachedSurveysSnapshot = snapshot;
+    renderSurveysFeed(snapshot);
+  });
+}
 
 function requireAuth(callback) {
   if (!currentUser) {
