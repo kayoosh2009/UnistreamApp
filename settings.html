@@ -119,6 +119,7 @@
       <img src="icons/end.png" alt="Success" class="save-modal-icon">
       <h3 class="save-modal-title">Saved Successfully</h3>
       <p class="save-modal-subtitle">Your profile changes are now live!</p>
+      <button type="button" id="btnCloseSaveModal" class="save-modal-btn">OK</button>
     </div>
   </div>
 
@@ -141,12 +142,25 @@
 
     const inputName = document.getElementById('inputName');
     const inputUsername = document.getElementById('inputUsername');
-    const inputAvatarUrl = document.getElementById('inputAvatarUrl');
     const fileAvatarInput = document.getElementById('fileAvatarInput');
+    const avatarClickZone = document.getElementById('avatarClickZone');
     const inputBannerUrl = document.getElementById('inputBannerUrl');
     const fileBannerInput = document.getElementById('fileBannerInput');
     const settingsForm = document.getElementById('settingsForm');
     const btnSaveProfile = document.getElementById('btnSaveProfile');
+    const btnCloseSaveModal = document.getElementById('btnCloseSaveModal');
+
+    if (avatarClickZone) {
+      avatarClickZone.addEventListener('click', () => {
+        fileAvatarInput.click();
+      });
+    }
+
+    if (btnCloseSaveModal) {
+      btnCloseSaveModal.addEventListener('click', () => {
+        saveModal.classList.remove('active');
+      });
+    }
 
     let currentUser = null;
     let currentAvatarData = '';
