@@ -55,6 +55,9 @@
             <img id="previewBanner" src="icons/stock.png" alt="Banner preview" class="preview-banner">
             <div class="preview-avatar-box">
               <img id="previewAvatar" src="icons/stock.png" alt="Avatar preview" class="preview-avatar" referrerpolicy="no-referrer">
+              <div id="avatarLoadingOverlay" class="avatar-loading-overlay hidden">
+                <div class="loading-ring"></div>
+              </div>
             </div>
           </div>
           <div class="preview-info-box">
@@ -109,6 +112,15 @@
       </form>
     </section>
   </main>
+
+  <!-- Centered Saved Modal -->
+  <div id="saveModal" class="save-modal-backdrop">
+    <div class="save-modal-card">
+      <img src="icons/end.png" alt="Success" class="save-modal-icon">
+      <h3 class="save-modal-title">Saved Successfully</h3>
+      <p class="save-modal-subtitle">Your profile changes are now live!</p>
+    </div>
+  </div>
 
   <script type="module">
     import { 
@@ -211,16 +223,52 @@
       }
     });
 
-    // File readers for local image uploads
-    fileAvatarInput.addEventListener('change', (e) => {
+    const avatarLoadingOverlay = document.getElementById('avatarLoadingOverlay');
+    const saveModal = document.getElementById('saveModal');
+
+    // 1:1 center-crop & base64 converter
+    function processSquareAvatar(file, targetSize = 400) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const minSide = Math.min(img.width, img.height);
+            const cropX = (img.width - minSide) / 2;
+            const cropY = (img.height - minSide) / 2;
+
+            canvas.width = targetSize;
+            canvas.height = targetSize;
+            const ctx = canvas.getContext('2d');
+
+            ctx.drawImage(img, cropX, cropY, minSide, minSide, 0, 0, targetSize, targetSize);
+            resolve(canvas.toDataURL('image/jpeg', 0.82));
+          };
+          img.onerror = reject;
+          img.src = event.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Avatar upload with loading animation & 1:1 square crop
+    fileAvatarInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        currentAvatarData = event.target.result;
-        previewAvatar.src = currentAvatarData;
-      };
-      reader.readAsDataURL(file);
+
+      avatarLoadingOverlay.classList.remove('hidden');
+
+      try {
+        const croppedBase64 = await processSquareAvatar(file, 400);
+        currentAvatarData = croppedBase64;
+        previewAvatar.src = croppedBase64;
+      } catch (err) {
+        console.error("Image processing error:", err);
+      } finally {
+        avatarLoadingOverlay.classList.add('hidden');
+      }
     });
 
     fileBannerInput.addEventListener('change', (e) => {
@@ -228,13 +276,29 @@
       if (!file) return;
       const reader = new FileReader();
       reader.onload = (event) => {
-        currentBannerData = event.target.result;
-        previewBanner.src = currentBannerData;
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxW = 900;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxW) {
+            h = Math.round((h * maxW) / w);
+            w = maxW;
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          currentBannerData = canvas.toDataURL('image/jpeg', 0.75);
+          previewBanner.src = currentBannerData;
+        };
+        img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     });
 
-    // Save profile changes
+    // Save profile changes & show success modal
     settingsForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!currentUser) return;
@@ -268,9 +332,11 @@
         }));
 
         btnSaveProfile.textContent = 'Saved!';
+        saveModal.classList.add('active');
+
         setTimeout(() => {
           window.location.href = 'profile.html';
-        }, 600);
+        }, 1300);
       } catch (err) {
         console.error("Failed to save settings:", err);
         btnSaveProfile.disabled = false;

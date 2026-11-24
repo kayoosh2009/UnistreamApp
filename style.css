@@ -536,6 +536,88 @@ body {
   left: 16px;
 }
 
+.avatar-loading-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-color: rgba(3, 0, 64, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(1.5px);
+}
+
+.loading-ring {
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: ring-spin 0.65s linear infinite;
+}
+
+@keyframes ring-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Save Success Centered Modal */
+.save-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(3, 0, 64, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.save-modal-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.save-modal-card {
+  background-color: #ffffff;
+  border: 1px solid #e7e8f1;
+  border-radius: 20px;
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  box-shadow: 0 16px 36px rgba(3, 0, 64, 0.2);
+  transform: scale(0.92);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.save-modal-backdrop.active .save-modal-card {
+  transform: scale(1);
+}
+
+.save-modal-icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  margin: 0 auto 16px;
+  display: block;
+}
+
+.save-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #030040;
+  margin-bottom: 6px;
+}
+
+.save-modal-subtitle {
+  font-size: 13.5px;
+  color: #666677;
+  line-height: 1.4;
+}
+
 .preview-avatar {
   width: 52px;
   height: 52px;
