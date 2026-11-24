@@ -51,8 +51,12 @@
       <div class="preview-card-wrapper">
         <span class="preview-label">Live Preview</span>
         <div class="profile-preview-card">
-          <div class="preview-banner-box">
+          <div class="preview-banner-box clickable-banner" id="bannerClickZone" title="Click to choose banner photo">
             <img id="previewBanner" src="icons/stock.png" alt="Banner preview" class="preview-banner">
+            <div class="banner-camera-badge">📷 Banner</div>
+            <div id="bannerLoadingOverlay" class="banner-loading-overlay hidden">
+              <div class="loading-ring"></div>
+            </div>
             <div class="preview-avatar-box clickable-avatar" id="avatarClickZone" title="Click to choose photo">
               <img id="previewAvatar" src="icons/stock.png" alt="Avatar preview" class="preview-avatar" referrerpolicy="no-referrer">
               <div class="avatar-camera-badge">📷</div>
@@ -94,14 +98,48 @@
         </div>
 
         <div class="form-group">
-          <label>Banner</label>
+          <label>Profile Banner</label>
           <div class="upload-row">
-            <input type="url" id="inputBannerUrl" placeholder="Banner image URL (optional)">
-            <label class="file-picker-btn">
-              <span>Upload</span>
+            <label class="file-picker-btn full-width" for="fileBannerInput">
+              <span>Choose Banner from Device (Landscape)</span>
               <input type="file" id="fileBannerInput" accept="image/*" hidden>
             </label>
           </div>
+        </div>
+
+        <div class="form-group">
+          <label for="inputCenter">Center / Hub</label>
+          <input type="text" id="inputCenter" list="centersList" placeholder="Search or type custom center..." maxlength="50">
+          <datalist id="centersList">
+            <option value="Tech Innovation Hub">
+            <option value="Digital Creative Center">
+            <option value="Science & Research Park">
+            <option value="University Campus">
+            <option value="Startup Incubator">
+          </datalist>
+        </div>
+
+        <div class="form-group">
+          <label>Startup</label>
+          <div class="startup-form-row">
+            <label class="startup-logo-picker" title="Upload startup logo">
+              <img id="previewStartupIcon" src="icons/stock.png" alt="Startup Logo">
+              <span class="startup-logo-badge">+ Logo</span>
+              <input type="file" id="fileStartupIcon" accept="image/*" hidden>
+            </label>
+            <input type="text" id="inputStartupName" placeholder="Startup name (optional)" maxlength="40">
+          </div>
+        </div>
+
+        <div class="form-group verification-box">
+          <div class="verification-header">
+            <label>Verification Status</label>
+            <span id="verificationStatusBadge" class="verified-status-tag">Unverified</span>
+          </div>
+          <p class="verification-note">Request a verification tick next to your name upon admin approval.</p>
+          <button type="button" id="btnRequestVerification" class="btn-verify-request">
+            Request Verification Tick
+          </button>
         </div>
 
         <div class="form-actions">
@@ -142,17 +180,32 @@
 
     const inputName = document.getElementById('inputName');
     const inputUsername = document.getElementById('inputUsername');
+    const inputCenter = document.getElementById('inputCenter');
+    const inputStartupName = document.getElementById('inputStartupName');
     const fileAvatarInput = document.getElementById('fileAvatarInput');
-    const avatarClickZone = document.getElementById('avatarClickZone');
-    const inputBannerUrl = document.getElementById('inputBannerUrl');
     const fileBannerInput = document.getElementById('fileBannerInput');
+    const fileStartupIcon = document.getElementById('fileStartupIcon');
+    const avatarClickZone = document.getElementById('avatarClickZone');
+    const bannerClickZone = document.getElementById('bannerClickZone');
+    const previewStartupIcon = document.getElementById('previewStartupIcon');
+    const bannerLoadingOverlay = document.getElementById('bannerLoadingOverlay');
+    const verificationStatusBadge = document.getElementById('verificationStatusBadge');
+    const btnRequestVerification = document.getElementById('btnRequestVerification');
     const settingsForm = document.getElementById('settingsForm');
     const btnSaveProfile = document.getElementById('btnSaveProfile');
     const btnCloseSaveModal = document.getElementById('btnCloseSaveModal');
 
+    let currentStartupIconData = '';
+
     if (avatarClickZone) {
       avatarClickZone.addEventListener('click', () => {
         fileAvatarInput.click();
+      });
+    }
+
+    if (bannerClickZone) {
+      bannerClickZone.addEventListener('click', () => {
+        fileBannerInput.click();
       });
     }
 
@@ -207,9 +260,49 @@
             currentBannerData = data.bannerUrl;
             previewBanner.src = data.bannerUrl;
           }
+          if (data.center) {
+            inputCenter.value = data.center;
+          }
+          if (data.startup) {
+            if (data.startup.name) inputStartupName.value = data.startup.name;
+            if (data.startup.icon) {
+              currentStartupIconData = data.startup.icon;
+              previewStartupIcon.src = data.startup.icon;
+            }
+          }
+          if (data.isVerified) {
+            verificationStatusBadge.textContent = '✓ Verified';
+            verificationStatusBadge.className = 'verified-status-tag verified';
+            btnRequestVerification.disabled = true;
+            btnRequestVerification.textContent = 'Account Verified';
+          } else if (data.verificationRequested) {
+            verificationStatusBadge.textContent = '⏳ Pending Review';
+            verificationStatusBadge.className = 'verified-status-tag pending';
+            btnRequestVerification.disabled = true;
+            btnRequestVerification.textContent = 'Request Pending';
+          }
         }
       } catch (err) {
         console.error("Error reading profile:", err);
+      }
+    });
+
+    btnRequestVerification.addEventListener('click', async () => {
+      if (!currentUser) return;
+      btnRequestVerification.disabled = true;
+      btnRequestVerification.textContent = 'Requesting...';
+      try {
+        await setDoc(doc(db, 'users', currentUser.uid), {
+          verificationRequested: true,
+          verificationRequestedAt: serverTimestamp()
+        }, { merge: true });
+        verificationStatusBadge.textContent = '⏳ Pending Review';
+        verificationStatusBadge.className = 'verified-status-tag pending';
+        btnRequestVerification.textContent = 'Request Sent!';
+      } catch (err) {
+        console.error("Verification request failed:", err);
+        btnRequestVerification.disabled = false;
+        btnRequestVerification.textContent = 'Request Verification Tick';
       }
     });
 
