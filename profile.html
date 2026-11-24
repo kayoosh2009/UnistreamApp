@@ -39,8 +39,19 @@
     </div>
 
     <div class="profile-user-info">
-      <h2 id="profileDisplayName" class="profile-name">User Name</h2>
+      <div class="profile-name-row">
+        <h2 id="profileDisplayName" class="profile-name">User Name</h2>
+        <span id="profileVerifiedBadge" class="verified-badge hidden" title="Verified Creator">✓</span>
+      </div>
       <span id="profileUsername" class="profile-username">@username</span>
+
+      <div class="profile-tags-row" id="profileTagsRow">
+        <span id="profileCenterTag" class="profile-meta-tag hidden">📍 <span id="centerTagText"></span></span>
+        <span id="profileStartupTag" class="profile-meta-tag startup-tag hidden">
+          <img id="profileStartupIcon" src="" class="startup-tag-icon hidden" alt="Startup">
+          <span id="startupTagText"></span>
+        </span>
+      </div>
     </div>
 
     <div class="profile-stats-card">
@@ -181,11 +192,42 @@
           if (data.avatarUrl) profileAvatar.src = data.avatarUrl;
           if (data.bannerUrl) profileBanner.src = data.bannerUrl;
 
+          // Verified Tick Badge
+          const verifiedBadge = document.getElementById('profileVerifiedBadge');
+          if (data.isVerified) {
+            verifiedBadge.classList.remove('hidden');
+          } else {
+            verifiedBadge.classList.add('hidden');
+          }
+
+          // Center Tag
+          const centerTag = document.getElementById('profileCenterTag');
+          const centerTagText = document.getElementById('centerTagText');
+          if (data.center) {
+            centerTagText.textContent = data.center;
+            centerTag.classList.remove('hidden');
+          }
+
+          // Startup Tag
+          const startupTag = document.getElementById('profileStartupTag');
+          const startupTagText = document.getElementById('startupTagText');
+          const startupTagIcon = document.getElementById('profileStartupIcon');
+          if (data.startup && data.startup.name) {
+            startupTagText.textContent = data.startup.name;
+            if (data.startup.icon) {
+              startupTagIcon.src = data.startup.icon;
+              startupTagIcon.classList.remove('hidden');
+            }
+            startupTag.classList.remove('hidden');
+          }
+
           localStorage.setItem('user_cached_profile', JSON.stringify({
             displayName: data.displayName || user.displayName || '',
             username: data.username || (user.email ? user.email.split('@')[0] : 'user'),
             avatarUrl: data.avatarUrl || user.photoURL || 'icons/stock.png',
-            bannerUrl: data.bannerUrl || 'icons/stock.png'
+            bannerUrl: data.bannerUrl || 'icons/stock.png',
+            center: data.center || '',
+            isVerified: Boolean(data.isVerified)
           }));
         }
       } catch (err) {
