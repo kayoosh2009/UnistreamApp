@@ -371,7 +371,53 @@
       }
     });
 
+    // Wide landscape banner processing (not 1:1)
     fileBannerInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      bannerLoadingOverlay.classList.remove('hidden');
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const targetW = 900;
+          const targetH = 300; // 3:1 cinematic landscape banner
+
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext('2d');
+
+          const imgRatio = img.width / img.height;
+          const targetRatio = targetW / targetH;
+          let renderW, renderH, offsetX, offsetY;
+
+          if (imgRatio > targetRatio) {
+            renderH = targetH;
+            renderW = img.width * (targetH / img.height);
+            offsetX = (targetW - renderW) / 2;
+            offsetY = 0;
+          } else {
+            renderW = targetW;
+            renderH = img.height * (targetW / img.width);
+            offsetX = 0;
+            offsetY = (targetH - renderH) / 2;
+          }
+
+          ctx.drawImage(img, offsetX, offsetY, renderW, renderH);
+          currentBannerData = canvas.toDataURL('image/jpeg', 0.75);
+          previewBanner.src = currentBannerData;
+          bannerLoadingOverlay.classList.add('hidden');
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Startup logo upload
+    fileStartupIcon.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
@@ -379,19 +425,13 @@
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const maxW = 900;
-          let w = img.width;
-          let h = img.height;
-          if (w > maxW) {
-            h = Math.round((h * maxW) / w);
-            w = maxW;
-          }
-          canvas.width = w;
-          canvas.height = h;
+          canvas.width = 100;
+          canvas.height = 100;
           const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, w, h);
-          currentBannerData = canvas.toDataURL('image/jpeg', 0.75);
-          previewBanner.src = currentBannerData;
+          const minSide = Math.min(img.width, img.height);
+          ctx.drawImage(img, (img.width - minSide)/2, (img.height - minSide)/2, minSide, minSide, 0, 0, 100, 100);
+          currentStartupIconData = canvas.toDataURL('image/png');
+          previewStartupIcon.src = currentStartupIconData;
         };
         img.src = event.target.result;
       };
@@ -417,11 +457,19 @@
         }
         await updateProfile(currentUser, authPayload);
 
+        const centerVal = inputCenter.value.trim();
+        const startupNameVal = inputStartupName.value.trim();
+
         await setDoc(doc(db, 'users', currentUser.uid), {
           displayName: newDisplayName,
           username: newUsername,
           avatarUrl: currentAvatarData,
           bannerUrl: currentBannerData,
+          center: centerVal,
+          startup: {
+            name: startupNameVal,
+            icon: currentStartupIconData
+          },
           updatedAt: serverTimestamp()
         }, { merge: true });
 
@@ -430,7 +478,9 @@
           displayName: newDisplayName,
           username: newUsername,
           avatarUrl: currentAvatarData,
-          bannerUrl: currentBannerData
+          bannerUrl: currentBannerData,
+          center: centerVal,
+          startupName: startupNameVal
         }));
 
         btnSaveProfile.disabled = false;
