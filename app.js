@@ -185,10 +185,6 @@ let currentUser = null;
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
   updateHeaderAvatar(user);
-  if (user && user.photoURL && (!cachedProfile || cachedProfile.avatarUrl !== user.photoURL)) {
-    const updated = { ...(cachedProfile || {}), avatarUrl: user.photoURL };
-    localStorage.setItem('user_cached_profile', JSON.stringify(updated));
-  }
   loadPublicSurveys();
 });
 

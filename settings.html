@@ -317,10 +317,12 @@
       const newUsername = inputUsername.value.trim().replace(/^@/, '');
 
       try {
-        await updateProfile(currentUser, {
-          displayName: newDisplayName,
-          photoURL: currentAvatarData
-        });
+        // Safe Auth profile update without passing long base64 strings ✨
+        const authPayload = { displayName: newDisplayName };
+        if (currentAvatarData && !currentAvatarData.startsWith('data:') && currentAvatarData.length < 1500) {
+          authPayload.photoURL = currentAvatarData;
+        }
+        await updateProfile(currentUser, authPayload);
 
         await setDoc(doc(db, 'users', currentUser.uid), {
           displayName: newDisplayName,
