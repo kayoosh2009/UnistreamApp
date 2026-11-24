@@ -308,7 +308,10 @@ function closeMenu() {
 }
 
 function updateHeaderAvatar(user) {
-  if (user && user.photoURL) {
+  const cached = JSON.parse(localStorage.getItem('user_cached_profile') || 'null');
+  if (cached && cached.avatarUrl) {
+    userAvatar.src = cached.avatarUrl;
+  } else if (user && user.photoURL) {
     userAvatar.src = user.photoURL;
   } else {
     userAvatar.src = 'icons/stock.png';
