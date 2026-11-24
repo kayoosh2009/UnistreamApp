@@ -536,6 +536,54 @@ body {
   left: 16px;
 }
 
+.clickable-avatar {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.clickable-avatar:hover {
+  transform: scale(1.04);
+}
+
+.avatar-camera-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  background-color: #030040;
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.file-picker-btn.full-width {
+  width: 100%;
+  text-align: center;
+}
+
+.save-modal-btn {
+  margin-top: 18px;
+  padding: 10px 32px;
+  background-color: #030040;
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.save-modal-btn:hover {
+  opacity: 0.9;
+}
+
 .avatar-loading-overlay {
   position: absolute;
   inset: 0;

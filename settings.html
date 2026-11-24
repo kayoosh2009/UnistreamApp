@@ -223,13 +223,6 @@
       previewUsername.textContent = '@' + (cleanUser || 'username');
     });
 
-    inputAvatarUrl.addEventListener('input', () => {
-      if (inputAvatarUrl.value.trim()) {
-        currentAvatarData = inputAvatarUrl.value.trim();
-        previewAvatar.src = currentAvatarData;
-      }
-    });
-
     inputBannerUrl.addEventListener('input', () => {
       if (inputBannerUrl.value.trim()) {
         currentBannerData = inputBannerUrl.value.trim();
@@ -345,12 +338,9 @@
           bannerUrl: currentBannerData
         }));
 
-        btnSaveProfile.textContent = 'Saved!';
+        btnSaveProfile.disabled = false;
+        btnSaveProfile.textContent = 'Save Changes';
         saveModal.classList.add('active');
-
-        setTimeout(() => {
-          window.location.href = 'profile.html';
-        }, 1300);
       } catch (err) {
         console.error("Failed to save settings:", err);
         btnSaveProfile.disabled = false;
