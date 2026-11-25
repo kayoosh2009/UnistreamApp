@@ -189,6 +189,8 @@
     const bannerClickZone = document.getElementById('bannerClickZone');
     const previewStartupIcon = document.getElementById('previewStartupIcon');
     const bannerLoadingOverlay = document.getElementById('bannerLoadingOverlay');
+    const avatarLoadingOverlay = document.getElementById('avatarLoadingOverlay');
+    const saveModal = document.getElementById('saveModal');
     const verificationStatusBadge = document.getElementById('verificationStatusBadge');
     const btnRequestVerification = document.getElementById('btnRequestVerification');
     const settingsForm = document.getElementById('settingsForm');
@@ -315,16 +317,6 @@
       const cleanUser = inputUsername.value.trim().replace(/^@/, '');
       previewUsername.textContent = '@' + (cleanUser || 'username');
     });
-
-    inputBannerUrl.addEventListener('input', () => {
-      if (inputBannerUrl.value.trim()) {
-        currentBannerData = inputBannerUrl.value.trim();
-        previewBanner.src = currentBannerData;
-      }
-    });
-
-    const avatarLoadingOverlay = document.getElementById('avatarLoadingOverlay');
-    const saveModal = document.getElementById('saveModal');
 
     // 1:1 center-crop & base64 converter
     function processSquareAvatar(file, targetSize = 400) {
