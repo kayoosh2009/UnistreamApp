@@ -120,6 +120,17 @@
         </div>
 
         <div class="form-group">
+          <label for="selectYear">Cohort Year</label>
+          <select id="selectYear" class="styled-select">
+            <option value="">Select cohort year...</option>
+            <option value="Alef">Alef (Year 1)</option>
+            <option value="Bet">Bet (Year 2)</option>
+            <option value="Gimel">Gimel (Year 3)</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label>Startup</label>
           <div class="startup-form-row">
             <label class="startup-logo-picker" title="Upload startup logo">
@@ -181,6 +192,7 @@
     const inputName = document.getElementById('inputName');
     const inputUsername = document.getElementById('inputUsername');
     const inputCenter = document.getElementById('inputCenter');
+    const selectYear = document.getElementById('selectYear');
     const inputStartupName = document.getElementById('inputStartupName');
     const fileAvatarInput = document.getElementById('fileAvatarInput');
     const fileBannerInput = document.getElementById('fileBannerInput');
@@ -264,6 +276,9 @@
           }
           if (data.center) {
             inputCenter.value = data.center;
+          }
+          if (data.year) {
+            selectYear.value = data.year;
           }
           if (data.startup) {
             if (data.startup.name) inputStartupName.value = data.startup.name;

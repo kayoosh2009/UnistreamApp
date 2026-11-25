@@ -46,11 +46,17 @@
       <span id="profileUsername" class="profile-username">@username</span>
 
       <div class="profile-tags-row" id="profileTagsRow">
+        <span id="profileYearTag" class="profile-meta-tag year-tag hidden">🎓 <span id="yearTagText"></span></span>
         <span id="profileCenterTag" class="profile-meta-tag hidden">📍 <span id="centerTagText"></span></span>
         <span id="profileStartupTag" class="profile-meta-tag startup-tag hidden">
           <img id="profileStartupIcon" src="" class="startup-tag-icon hidden" alt="Startup">
           <span id="startupTagText"></span>
         </span>
+      </div>
+
+      <div id="profileWorkBadge" class="profile-work-badge hidden">
+        <img id="workStartupIcon" src="icons/stock.png" class="work-badge-icon" alt="Project Logo">
+        <span id="workBadgeText" class="work-badge-text"></span>
       </div>
     </div>
 
@@ -200,6 +206,14 @@
             verifiedBadge.classList.add('hidden');
           }
 
+          // Year Tag
+          const yearTag = document.getElementById('profileYearTag');
+          const yearTagText = document.getElementById('yearTagText');
+          if (data.year) {
+            yearTagText.textContent = `Year ${data.year}`;
+            yearTag.classList.remove('hidden');
+          }
+
           // Center Tag
           const centerTag = document.getElementById('profileCenterTag');
           const centerTagText = document.getElementById('centerTagText');
@@ -219,6 +233,28 @@
               startupTagIcon.classList.remove('hidden');
             }
             startupTag.classList.remove('hidden');
+          }
+
+          // Prominent Work Badge: Working on [Startup] at [Center]
+          const profileWorkBadge = document.getElementById('profileWorkBadge');
+          const workStartupIcon = document.getElementById('workStartupIcon');
+          const workBadgeText = document.getElementById('workBadgeText');
+
+          if (data.startup && data.startup.name) {
+            if (data.startup.icon) {
+              workStartupIcon.src = data.startup.icon;
+            } else {
+              workStartupIcon.src = 'icons/stock.png';
+            }
+
+            if (data.center) {
+              workBadgeText.innerHTML = `Working on <strong>${data.startup.name}</strong> at <strong>${data.center}</strong>`;
+            } else {
+              workBadgeText.innerHTML = `Working on <strong>${data.startup.name}</strong>`;
+            }
+            profileWorkBadge.classList.remove('hidden');
+          } else {
+            profileWorkBadge.classList.add('hidden');
           }
 
           localStorage.setItem('user_cached_profile', JSON.stringify({
