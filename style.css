@@ -761,6 +761,57 @@ body {
   object-fit: cover;
 }
 
+.styled-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #dcdce6;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  background-color: #ffffff;
+  font-family: inherit;
+  color: #222233;
+}
+
+.profile-meta-tag.year-tag {
+  background-color: #f0f1fc;
+  color: #030040;
+  font-weight: 600;
+}
+
+.profile-work-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #f7f8fe 0%, #edf0fc 100%);
+  border: 1px solid #dce0f5;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(3, 0, 64, 0.04);
+}
+
+.work-badge-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: cover;
+  background-color: #ffffff;
+  border: 1px solid #d8dcee;
+  flex-shrink: 0;
+}
+
+.work-badge-text {
+  font-size: 13.5px;
+  color: #2c2d44;
+  line-height: 1.4;
+}
+
+.work-badge-text strong {
+  color: #030040;
+  font-weight: 700;
+}
+
 .avatar-loading-overlay {
   position: absolute;
   inset: 0;
