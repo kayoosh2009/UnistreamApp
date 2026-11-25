@@ -464,8 +464,9 @@
         }
         await updateProfile(currentUser, authPayload);
 
-        const centerVal = inputCenter.value.trim();
-        const startupNameVal = inputStartupName.value.trim();
+        const centerVal = inputCenter ? inputCenter.value.trim() : '';
+        const startupNameVal = inputStartupName ? inputStartupName.value.trim() : '';
+        const yearVal = selectYear ? selectYear.value : '';
 
         await setDoc(doc(db, 'users', currentUser.uid), {
           displayName: newDisplayName,
@@ -473,9 +474,10 @@
           avatarUrl: currentAvatarData,
           bannerUrl: currentBannerData,
           center: centerVal,
+          year: yearVal,
           startup: {
             name: startupNameVal,
-            icon: currentStartupIconData
+            icon: currentStartupIconData || ''
           },
           updatedAt: serverTimestamp()
         }, { merge: true });
@@ -487,6 +489,7 @@
           avatarUrl: currentAvatarData,
           bannerUrl: currentBannerData,
           center: centerVal,
+          year: yearVal,
           startupName: startupNameVal
         }));
 
