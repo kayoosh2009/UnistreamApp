@@ -276,7 +276,14 @@ function requireAuth(callback) {
   callback();
 }
 
+// Navigate to profile via bottom nav icon or top header avatar ✨
 btnProfile.addEventListener('click', () => {
+  requireAuth(() => {
+    window.location.href = 'profile.html';
+  });
+});
+
+userAvatar.addEventListener('click', () => {
   requireAuth(() => {
     window.location.href = 'profile.html';
   });
