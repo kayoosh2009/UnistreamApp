@@ -41,7 +41,7 @@
     <div class="profile-user-info">
       <div class="profile-name-row">
         <h2 id="profileDisplayName" class="profile-name">User Name</h2>
-        <span id="profileVerifiedBadge" class="verified-badge hidden" title="Verified Creator">✓</span>
+        <img id="profileVerifiedBadge" src="icons/verifity.png" class="verifity-badge-img hidden" alt="Verified">
       </div>
       <span id="profileUsername" class="profile-username">@username</span>
 
@@ -198,9 +198,9 @@
           if (data.avatarUrl) profileAvatar.src = data.avatarUrl;
           if (data.bannerUrl) profileBanner.src = data.bannerUrl;
 
-          // Verified Tick Badge
+          // Verified Badge check (supports both 'verifity' and 'isVerified') ✨
           const verifiedBadge = document.getElementById('profileVerifiedBadge');
-          if (data.isVerified) {
+          if (data.verifity || data.isVerified) {
             verifiedBadge.classList.remove('hidden');
           } else {
             verifiedBadge.classList.add('hidden');

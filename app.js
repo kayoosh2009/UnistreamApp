@@ -4,6 +4,7 @@ import {
   onAuthStateChanged, 
   db, 
   doc, 
+  getDoc, 
   collection, 
   updateDoc, 
   increment, 
@@ -54,6 +55,28 @@ if (authDialogCancel) {
 
 const viewedSessionKey = 'viewed_post_ids';
 const viewedPosts = new Set(JSON.parse(sessionStorage.getItem(viewedSessionKey) || '[]'));
+const verifiedAuthorsCache = new Map();
+
+// Check if author is verified in Firestore ('verifity' or 'isVerified') ✨
+async function checkAuthorVerification(authorId, post) {
+  if (post.authorVerified || post.verifity || post.isVerified) return true;
+  if (!authorId) return false;
+  if (verifiedAuthorsCache.has(authorId)) return verifiedAuthorsCache.get(authorId);
+
+  try {
+    const userDoc = await getDoc(doc(db, 'users', authorId));
+    if (userDoc.exists()) {
+      const data = userDoc.data();
+      const isVerified = Boolean(data.verifity || data.isVerified);
+      verifiedAuthorsCache.set(authorId, isVerified);
+      return isVerified;
+    }
+  } catch (err) {
+    console.error("Verification check error:", err);
+  }
+  verifiedAuthorsCache.set(authorId, false);
+  return false;
+}
 
 function formatTimeAgo(timestamp) {
   if (!timestamp) return 'just now';
@@ -115,7 +138,10 @@ onSnapshot(postsQuery, (snapshot) => {
         <div class="post-author-box">
           <img src="${post.authorAvatar || 'icons/stock.png'}" class="post-author-avatar" referrerpolicy="no-referrer" onerror="this.src='icons/stock.png'">
           <div class="post-author-details">
-            <span class="post-author-name">${post.authorName || 'User'}</span>
+            <div class="post-author-name-row">
+              <span class="post-author-name">${post.authorName || 'User'}</span>
+              <img src="icons/verifity.png" class="verifity-badge-img hidden" alt="Verified">
+            </div>
             <span class="post-time">${formatTimeAgo(post.createdAt)}</span>
           </div>
         </div>
@@ -167,6 +193,14 @@ onSnapshot(postsQuery, (snapshot) => {
         setTimeout(() => { shareBtn.style.opacity = '1'; }, 400);
       } catch (err) {
         console.error("Copy failed:", err);
+      }
+    });
+
+    // Reveal verifity icon if author has verifity: true in Firebase ✨
+    const verifityBadge = postElement.querySelector('.verifity-badge-img');
+    checkAuthorVerification(post.authorId, post).then((isVerified) => {
+      if (isVerified && verifityBadge) {
+        verifityBadge.classList.remove('hidden');
       }
     });
 
